@@ -10,3 +10,9 @@ def superadmin_create(cursor):
         INSERT OR IGNORE INTO admin (username, password)
         VALUES ('arvi', 'pass')
     ''')
+
+def check_admin_exists(cursor, username):
+    cursor.execute('''
+        SELECT * FROM admin WHERE username = ?
+    ''', (username,))
+    return cursor.fetchone()

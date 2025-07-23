@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 8px; }
+        th { background-color: #f2f2f2; }
+        form { display: inline; }
+    </style>
+</head>
+<body>
+    <h2>Admin Dashboard: Manage Parking Lots</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul style="color: green;">
+                {% for msg in messages %}
+                    <li>{{ msg }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Add New Parking Lot -->
+    <h3>Add New Parking Lot</h3>
+    <form action="{{ url_for('auth_bp.add_lot') }}" method="post">
+        <input type="text" name="name" placeholder="Location Name" required>
+        <input type="number" step="0.01" name="price" placeholder="Price" required>
+        <input type="text" name="address" placeholder="Address">
+        <input type="text" name="pincode" placeholder="Pin Code">
+        <input type="number" name="max_spots" placeholder="Max Spots" required>
+        <button type="submit">Add</button>
+    </form>
+
+    <!-- Existing Lots -->
+    <h3>Existing Parking Lots</h3>
+    <table>
+        <tr>
+            <th>ID</th><th>Location</th><th>Price</th><th>Address</th><th>Pin Code</th><th>Max Spots</th><th>Actions</th>
+        </tr>
+        {% for lot in lots %}
+        <tr>
+            <form action="{{ url_for('auth_bp.edit_lot', lot_id=lot.id) }}" method="post">
+                <td>{{ lot.id }}</td>
+                <td><input type="text" name="name" value="{{ lot.prime_location_name }}" required></td>
+                <td><input type="number" step="0.01" name="price" value="{{ lot.price }}" required></td>
+                <td><input type="text" name="address" value="{{ lot.address }}"></td>
+                <td><input type="text" name="pincode" value="{{ lot.pin_code }}"></td>
+                <td><input type="number" name="max_spots" value="{{ lot.max_spots }}" required></td>
+                <td>
+                    <button type="submit">Update</button>
+            </form>
+            <form action="{{ url_for('auth_bp.delete_lot', lot_id=lot.id) }}" method="post" onsubmit="return confirm('Delete this lot? Ensure all spots are empty!');">
+                <button type="submit">Delete</button>
+            </form>
+                </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
