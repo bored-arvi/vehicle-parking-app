@@ -95,3 +95,36 @@ def api_get_parking_lots():
     lots = get_parking_lots(cursor)
     conn.close()
     return jsonify([dict(lot) for lot in lots]), 200
+
+@parking_spot_bp.route('/api/lot/delete/<int:lot_id>', methods=['DELETE'])
+def api_delete_parking_lot(lot_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM parking_lots WHERE id = ?', (lot_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': f'Parking lot {lot_id} deleted'}), 200
+
+@parking_spot_bp.route('/api/lot/update', methods=['PUT'])
+def update_parking_lot():
+    data = request.get_json()
+    lot_id = data.get('id')
+    name = data.get('name')
+    price = data.get('price')
+    address = data.get('address')
+    pincode = data.get('pincode')
+    max_spots = data.get('max_spots')
+
+    if not all([lot_id, name, price, max_spots]):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('''
+        UPDATE parking_lots
+        SET prime_location_name = ?, price = ?, address = ?, pin_code = ?, max_spots = ?
+        WHERE id = ?
+    ''', (name, price, address, pincode, max_spots, lot_id))
+    db.commit()
+    return jsonify({'message': 'Lot updated successfully'}), 200
+
