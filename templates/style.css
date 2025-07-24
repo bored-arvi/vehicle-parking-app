@@ -1,0 +1,14 @@
+.spot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+.spot-box {
+    background-color: #4caf50;
+    color: white;
+    padding: 8px;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}

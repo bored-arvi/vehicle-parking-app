@@ -1,62 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Parking Lots</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 8px; }
-        th { background-color: #f2f2f2; }
-        form { display: inline; }
+        body {
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: #343a40;
+            color: white;
+            position: fixed;
+        }
+        .sidebar a {
+            display: block;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            background: #495057;
+        }
+        .main {
+            margin-left: 250px;
+            padding: 20px;
+            width: 100%;
+        }
+        .lot-card {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <h2>Admin Dashboard: Manage Parking Lots</h2>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <ul style="color: green;">
-                {% for msg in messages %}
-                    <li>{{ msg }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
+<!-- Sidebar -->
+<div class="sidebar">
+    <h4 class="text-center py-4"><i class="bi bi-car-front"></i> Parking Admin</h4>
+    <a href="#">Users</a>
+    <a href="#">Lots</a>
+    <a href="#">Spots</a>
+    <a href="#">Reservations</a>
+    <a href="/logout">Logout</a>
+</div>
 
-    <!-- Add New Parking Lot -->
-    <h3>Add New Parking Lot</h3>
-    <form action="{{ url_for('auth_bp.add_lot') }}" method="post">
-        <input type="text" name="name" placeholder="Location Name" required>
-        <input type="number" step="0.01" name="price" placeholder="Price" required>
-        <input type="text" name="address" placeholder="Address">
-        <input type="text" name="pincode" placeholder="Pin Code">
-        <input type="number" name="max_spots" placeholder="Max Spots" required>
-        <button type="submit">Add</button>
+<!-- Main Content -->
+<div class="main">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Parking Lots</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLotModal">+ Add Lot</button>
+    </div>
+
+    <div id="lots-container">
+        <!-- Will be filled by JS -->
+    </div>
+</div>
+
+<!-- Add Lot Modal -->
+<div class="modal fade" id="addLotModal" tabindex="-1" aria-labelledby="addLotModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="addLotForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Lot</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" name="name" placeholder="Lot Name" class="form-control mb-2" required>
+        <input type="number" step="0.1" name="price" placeholder="Price (₹ per hour)" class="form-control mb-2" required>
+        <input type="text" name="address" placeholder="Address" class="form-control mb-2">
+        <input type="text" name="pincode" placeholder="Pincode" class="form-control mb-2">
+        <input type="number" name="max_spots" placeholder="Total Spots" class="form-control mb-2" required>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success">Add Lot</button>
+      </div>
     </form>
+  </div>
+</div>
 
-    <!-- Existing Lots -->
-    <h3>Existing Parking Lots</h3>
-    <table>
-        <tr>
-            <th>ID</th><th>Location</th><th>Price</th><th>Address</th><th>Pin Code</th><th>Max Spots</th><th>Actions</th>
-        </tr>
-        {% for lot in lots %}
-        <tr>
-            <form action="{{ url_for('auth_bp.edit_lot', lot_id=lot.id) }}" method="post">
-                <td>{{ lot.id }}</td>
-                <td><input type="text" name="name" value="{{ lot.prime_location_name }}" required></td>
-                <td><input type="number" step="0.01" name="price" value="{{ lot.price }}" required></td>
-                <td><input type="text" name="address" value="{{ lot.address }}"></td>
-                <td><input type="text" name="pincode" value="{{ lot.pin_code }}"></td>
-                <td><input type="number" name="max_spots" value="{{ lot.max_spots }}" required></td>
-                <td>
-                    <button type="submit">Update</button>
-            </form>
-            <form action="{{ url_for('auth_bp.delete_lot', lot_id=lot.id) }}" method="post" onsubmit="return confirm('Delete this lot? Ensure all spots are empty!');">
-                <button type="submit">Delete</button>
-            </form>
-                </td>
-        </tr>
-        {% endfor %}
-    </table>
+<!-- Bootstrap + JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Add Lot Form Submit
+document.getElementById('addLotForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = {
+        name: form.name.value,
+        price: parseFloat(form.price.value),
+        address: form.address.value,
+        pincode: form.pincode.value,
+        max_spots: parseInt(form.max_spots.value)
+    };
+
+    const res = await fetch('/lot/spot/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+        form.reset();
+        bootstrap.Modal.getInstance(document.getElementById('addLotModal')).hide();
+        fetchParkingLots();
+    } else {
+        const errorData = await res.json();
+        alert('Failed to add lot: ' + (errorData.error || 'Unknown error.'));
+    }
+});
+
+// Fetch and render all lots
+async function fetchParkingLots() {
+    try {
+        const response = await fetch('/api/lots');
+        if (!response.ok) throw new Error('Failed to fetch parking lots');
+
+        const lots = await response.json();
+        const container = document.getElementById('lots-container');
+        container.innerHTML = '';
+
+        if (lots.length === 0) {
+            container.innerHTML = '<p>No parking lots available.</p>';
+            return;
+        }
+
+        lots.forEach(lot => {
+            const lotCard = document.createElement('div');
+            lotCard.className = 'card lot-card p-3';
+
+            lotCard.innerHTML = `
+                <h5><b>${lot.prime_location_name}</b></h5>
+                <p>Price: ₹${lot.price}</p>
+                <p>Pincode: ${lot.pin_code}</p>
+                <p>Max Spots: ${lot.max_spots}</p>
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="toggleSpots(${lot.id})">View Spots</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="editLot(${lot.id})">Edit</button>
+                <button class="btn btn-outline-danger btn-sm" onclick="deleteLot(${lot.id})">Delete</button>
+                <div id="spots-${lot.id}" data-visible="false" class="mt-3"></div>
+            `;
+            container.appendChild(lotCard);
+        });
+
+    } catch (err) {
+        console.error(err);
+        alert("Error fetching lots.");
+    }
+}
+
+// Toggle spot display per lot
+async function toggleSpots(lotId) {
+    const container = document.getElementById(`spots-${lotId}`);
+    
+    if (container.dataset.visible === "true") {
+        container.innerHTML = '';
+        container.dataset.visible = "false";
+        return;
+    }
+
+    const res = await fetch(`/api/spot/available/${lotId}`);
+    if (!res.ok) {
+        container.innerHTML = `<small class="text-danger">Failed to load spots</small>`;
+        return;
+    }
+
+    const spots = await res.json();
+    if (spots.length === 0) {
+        container.innerHTML = '<small>No available spots in this lot.</small>';
+    } else {
+        container.innerHTML = `
+            <hr>
+            <h6>Available Spots:</h6>
+            <div class="spot-grid">
+                ${spots.map(s => `<div class="spot-box">#${s.id}</div>`).join('')}
+            </div>
+        `;
+    }
+    container.dataset.visible = "true";
+}
+
+// Delete lot
+async function deleteLot(lotId) {
+    if (!confirm('Are you sure you want to delete this lot?')) return;
+    const res = await fetch(`/api/lot/delete/${lotId}`, { method: 'DELETE' });
+    if (res.ok) fetchParkingLots();
+    else alert('Failed to delete lot.');
+}
+
+window.onload = fetchParkingLots;
+</script>
+
 </body>
 </html>

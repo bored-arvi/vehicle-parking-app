@@ -20,9 +20,9 @@ def login():
             if check[1] == password:
                 session['role'] = 'admin'
                 session['username'] = username
-                return redirect('/dashboard')
+                return redirect('/admin/dashboard')
             else:
                 return "Invalid password", 401
     return render_template("admin.html")
     
-                
+    
