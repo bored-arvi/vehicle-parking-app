@@ -111,20 +111,54 @@
   </div>
 </div>
 
+<!-- Spot Detail Modal -->
+<div class="modal fade" id="spotDetailModal" tabindex="-1" aria-labelledby="spotDetailLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="spotDetailForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Spot Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="spot-id">
+        <div class="mb-2">
+          <label>Spot Number</label>
+          <input type="text" id="spot-number" class="form-control" readonly>
+        </div>
+        <div class="mb-2">
+          <label>Status</label>
+          <select id="spot-status" class="form-control">
+            <option value="available">Available</option>
+            <option value="occupied">Occupied</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label>Lot ID</label>
+          <input type="text" id="spot-lot-id" class="form-control" readonly>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-danger" onclick="deleteSpot()">Delete</button>
+        <button type="submit" class="btn btn-success">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
 <!-- Bootstrap + JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.getElementById('editLotForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const data = {
+    const data = { 
         id: parseInt(document.getElementById('edit-id').value),
         name: document.getElementById('edit-name').value,
         price: parseFloat(document.getElementById('edit-price').value),
         address: document.getElementById('edit-address').value,
         pincode: document.getElementById('edit-pincode').value,
         max_spots: parseInt(document.getElementById('edit-max-spots').value)
-    };
+    }; 
 
     const res = await fetch('/api/lot/update', {
         method: 'PUT',
@@ -225,21 +259,56 @@ async function renderSpots(lotId) {
         const spot = document.createElement('div');
         spot.className = 'spot-card';
         spot.innerHTML = `#${s.id} <br> ${s.occupied}/${s.available}`;
-        spot.onclick = () => showSpotDetailModal(s);
+        spot.onclick = () => showSpotModal(s);
         container.appendChild(spot);
     });
 }
 
-function showSpotDetailModal(spot) {
-    alert(`Spot ID: ${spot.id}\nOccupied: ${spot.occupied}\nAvailable: ${spot.available}`);
-    // Replace alert with actual editable modal if needed
-}
 
 async function deleteLot(id) {
     if (!confirm("Delete this lot?")) return;
     const res = await fetch(`/api/lot/delete/${id}`, { method: 'DELETE' });
     if (res.ok) fetchParkingLots();
     else alert('Failed to delete');
+}
+
+function showSpotModal(spot) {
+    document.getElementById('spot-id').value = spot.id;
+    document.getElementById('spot-number').value = spot.number || spot.id;
+    document.getElementById('spot-status').value = spot.status || 'available';
+    document.getElementById('spot-lot-id').value = spot.lot_id || '';
+    new bootstrap.Modal(document.getElementById('spotDetailModal')).show();
+}
+
+document.getElementById('spotDetailForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const spotId = document.getElementById('spot-id').value;
+    const status = document.getElementById('spot-status').value;
+
+    const res = await fetch(`/api/spot/update/${spotId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+    });
+
+    if (res.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('spotDetailModal')).hide();
+        fetchParkingLots(); // Refresh UI
+    } else {
+        alert('Failed to update spot.');
+    }
+});
+
+async function deleteSpot() {
+    const spotId = document.getElementById('spot-id').value;
+    if (!confirm('Are you sure you want to delete this spot?')) return;
+    const res = await fetch(`/api/spot/delete/${spotId}`, { method: 'DELETE' });
+    if (res.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('spotDetailModal')).hide();
+        fetchParkingLots();
+    } else {
+        alert('Failed to delete spot.');
+    }
 }
 
 window.onload = fetchParkingLots;
