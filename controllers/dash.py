@@ -2,12 +2,14 @@
 from flask import render_template, session  # Replace with your DB name
 
 from flask import Blueprint, render_template, session
-from controllers import admin_dashboard_bp
+from controllers import dashboard_bp
 
-@admin_dashboard_bp.route('/dashboard',methods=['GET','POST'])
+@dashboard_bp.route('/dashboard',methods=['GET','POST'])
 def dashboard():
     if 'role' in session and session['role'] == 'admin':
         return render_template('admin_dash.html')
     else:
         return "Unauthorized", 403
+
+
 

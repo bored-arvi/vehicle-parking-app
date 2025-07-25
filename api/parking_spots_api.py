@@ -4,7 +4,7 @@ import sqlite3
 from models.parking_spot import (
     add_parking_spot, delete_parking_spot,
     reserve_parking_spot, release_parking_spot,
-    get_available_spots, get_parking_status
+    get_available_spots, get_multiple_parking_status, get_total_spots
 )
 from models.parking_lot import  add_parking_lot_spots,get_parking_lots 
 
@@ -21,15 +21,33 @@ def get_db():
 def api_add_spot():
     data = request.json
     lot_id = data.get('lot_id')
+    status = data.get('status')
+
     if not lot_id:
         return jsonify({'error': 'lot_id is required'}), 400
 
     conn = get_db()
     cursor = conn.cursor()
-    add_parking_spot(cursor, lot_id)
+
+    cursor.execute("SELECT COUNT(*) FROM parking_spots WHERE lot_id = ?", (lot_id,))
+    current_count = cursor.fetchone()[0]
+
+    cursor.execute("SELECT max_spots FROM parking_lots WHERE id = ?", (lot_id,))
+    result = cursor.fetchone()
+    if not result:
+        return jsonify({'error': 'Lot not found'}), 404
+
+    max_spots = result[0]
+
+    if current_count >= max_spots:
+        return jsonify({'error': 'Max spot limit reached'}), 400
+
+    add_parking_spot(cursor, lot_id, status)
     conn.commit()
     conn.close()
+
     return jsonify({'message': 'Parking spot added'}), 201
+
 
 @parking_spot_bp.route('/api/spot/delete/<int:spot_id>', methods=['DELETE'])
 def api_delete_spot(spot_id):
@@ -128,10 +146,10 @@ def update_parking_lot():
     db.commit()
     return jsonify({'message': 'Lot updated successfully'}), 200
 
-@parking_spot_bp.route('/api/lot/status/<int:lot_id>', methods=['GET'])
-def get_parking_status(lot_id): 
+@parking_spot_bp.route('/api/spot/status/<int:lot_id>', methods=['GET'])
+def get_multiple_parking_status_api(lot_id): 
     conn = get_db()
     cursor = conn.cursor()
-    status = get_parking_status(cursor, lot_id)
+    statuses = get_multiple_parking_status(cursor, lot_id)
     conn.close()
-    return jsonify({'status': 'Available' if status else 'Occupied'}), 200
+    return jsonify([{'id': status[0], 'status': status[1], 'lot_id': lot_id} for status in statuses]), 200

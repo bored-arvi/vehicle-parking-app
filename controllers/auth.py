@@ -4,9 +4,9 @@ from models.user import check_user_exists
 from models.admin import check_admin_exists
 from controllers import auth_bp
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/admin', methods=['GET', 'POST'],endpoint='admin_login')
 
-def login():
+def admin_login():
 
     if request.method == 'POST':
         username = request.form['admin_id']
@@ -24,5 +24,21 @@ def login():
             else:
                 return "Invalid password", 401
     return render_template("admin.html")
-    
-    
+
+@auth_bp.route('/user', methods=['GET', 'POST'])
+def user_login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        conn = sqlite3.connect('parking.db')
+        cursor = conn.cursor()
+
+        if check_user_exists(cursor, username):
+            session['role'] = 'user'
+            session['username'] = username
+            return redirect('/user/dashboard')
+        else:
+            return "Invalid credentials", 401
+    return render_template("user.html")
+

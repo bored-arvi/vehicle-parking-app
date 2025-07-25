@@ -9,11 +9,11 @@ def create_parking_spot_table(cursor):
         )
     ''')
 
-def add_parking_spot(cursor, lot_id):
+def add_parking_spot(cursor, lot_id, status='A'):
     cursor.execute('''
         INSERT INTO parking_spots (lot_id, status)
-        VALUES (?, 'A')
-    ''', (lot_id,))
+        VALUES (?, ?)
+    ''', (lot_id, status))
 
 def get_available_spots(cursor, lot_id):
     cursor.execute('''
@@ -40,11 +40,14 @@ def add_multiple_spots(cursor, lot_id, count):
     for _ in range(count):
         add_parking_spot(cursor, lot_id)
 
-def get_parking_status(cursor,lot_id):
+def get_multiple_parking_status(cursor,lot_id):
     cursor.execute('''
-            SELECT status from parking_spots WHERE lot_id = ?
+            SELECT id,status from parking_spots WHERE lot_id = ?
         ''', (lot_id,))
-    if cursor.fetchone()[0] == 'A':
-        return True
-    else:
-        return False
+    return cursor.fetchall()
+
+def get_total_spots(cursor, lot_id):
+    cursor.execute('''
+        SELECT COUNT(*) FROM parking_spots WHERE lot_id = ?
+    ''', (lot_id,))
+    return cursor.fetchone()[0]
