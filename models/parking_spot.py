@@ -40,3 +40,11 @@ def add_multiple_spots(cursor, lot_id, count):
     for _ in range(count):
         add_parking_spot(cursor, lot_id)
 
+def get_parking_status(cursor,lot_id):
+    cursor.execute('''
+            SELECT status from parking_spots WHERE lot_id = ?
+        ''', (lot_id,))
+    if cursor.fetchone()[0] == 'A':
+        return True
+    else:
+        return False

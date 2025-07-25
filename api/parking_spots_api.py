@@ -4,7 +4,7 @@ import sqlite3
 from models.parking_spot import (
     add_parking_spot, delete_parking_spot,
     reserve_parking_spot, release_parking_spot,
-    get_available_spots
+    get_available_spots, get_parking_status
 )
 from models.parking_lot import  add_parking_lot_spots,get_parking_lots 
 
@@ -128,3 +128,10 @@ def update_parking_lot():
     db.commit()
     return jsonify({'message': 'Lot updated successfully'}), 200
 
+@parking_spot_bp.route('/api/lot/status/<int:lot_id>', methods=['GET'])
+def get_parking_status(lot_id): 
+    conn = get_db()
+    cursor = conn.cursor()
+    status = get_parking_status(cursor, lot_id)
+    conn.close()
+    return jsonify({'status': 'Available' if status else 'Occupied'}), 200
