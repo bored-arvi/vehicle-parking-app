@@ -63,13 +63,12 @@ def api_get_user_reservations(user_id):
 def api_release_reservation(reservation_id):
     with get_db() as conn:
         cursor = conn.cursor()
+        data=request.json
+        leaving_timestamp=data['parking_timestamp']
+        parking_cost=data['total_cost']
 
-        reservation = get_parking_timestamp(cursor, reservation_id)
-        if not reservation:
+        if not parking_cost or not leaving_timestamp:
             return jsonify({'message': 'Reservation not found'}), 404
-
-        leaving_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        parking_cost = calculate_parking_cost(reservation['parking_timestamp'], leaving_timestamp, reservation['price_per_hour'])
 
         release_reservation(cursor, reservation_id, leaving_timestamp, parking_cost)
         conn.commit()
@@ -86,3 +85,17 @@ def api_get_parking_timestamp(reservation_id):
         return jsonify({'message': 'Reservation not found'}), 404
 
     return jsonify({'parking_timestamp': parking_timestamp}), 200
+
+@reservations_bp.route('/api/reservation/<reservation_id>/<user_id>', methods=['GET'])
+def api_get_reservation(reservation_id, user_id):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT * FROM reservations WHERE spot_id = ? AND user_id = ?
+        ''', (reservation_id, user_id))
+        reservation = cursor.fetchone()
+
+    if not reservation:
+        return jsonify({'message': 'Reservation not found'}), 404
+
+    return jsonify(dict(reservation)), 200

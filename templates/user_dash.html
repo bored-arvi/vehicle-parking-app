@@ -18,7 +18,7 @@
 <body class="bg-light">
 
 <!-- Hidden user info -->
-<div id="user-info" data-user="{{ session['username'] }}"></div>
+<div id="user-info" data-user="{{ session['user_id'] }}"></div>
 
 <!-- Navbar -->
 <nav class="navbar navbar-dark bg-dark p-3">
@@ -81,16 +81,20 @@
             <input type="text" class="form-control" id="release-spot-id" disabled>
           </div>
           <div class="mb-2">
-            <label class="form-label">Lot Name</label>
-            <input type="text" class="form-control" id="release-lot-name" disabled>
-          </div>
-          <div class="mb-2">
             <label class="form-label">Vehicle Number</label>
             <input type="text" class="form-control" id="release-vehicle-number" disabled>
           </div>
           <div class="mb-2">
             <label class="form-label">Start Time</label>
             <input type="text" class="form-control" id="release-start-time" disabled>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">End Time</label>
+            <input type="text" class="form-control" id="release-end-time" disabled>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Total Cost</label>
+            <input type="text" class="form-control" id="release-total-cost" disabled>
           </div>
           <p>Are you sure you want to release this reservation?</p>
         </form>
@@ -135,12 +139,19 @@ document.getElementById('reserve-form').addEventListener('submit', async (e) => 
 document.getElementById('release-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const reservationId = document.getElementById('release-reservation-id').value;
+  const parking_timestamp=document.getElementById('release-end-time').value;
+  const total_cost=document.getElementById('release-total-cost').value;
+  const spotId= document.getElementById('release-spot-id').value;
 
-  const res = await fetch(`/api/reservations/release/${reservationId}`, { method: 'POST' });
-
+  const res = await fetch(`/api/reservations/release/${reservationId}`, { 
+    method: 'POST' ,
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ parking_timestamp: parking_timestamp, total_cost: total_cost})
+  });
   if (res.ok) {
     const data = await res.json();
     alert(`Spot released. Total cost: ₹${data.cost}`);
+    const res1= await fetch(`/api/spot/release/${spotId}`,{method: 'POST'})
     bootstrap.Modal.getInstance(document.getElementById('releaseModal')).hide();
     await fetchLots();
     await fetchUserReservations();
@@ -150,13 +161,16 @@ document.getElementById('release-form').addEventListener('submit', async (e) => 
 });
 
 let currentSpotAction = null;
+let lotPrices={};
 
 async function fetchLots() {
     const res = await fetch('/api/lots');
     const lots = await res.json();
     const container = document.getElementById('lots-container');
     container.innerHTML = '';
-
+    lots.forEach(lot => {
+        lotPrices[lot.id] = lot.price; // Store lot prices for later use
+    });
     for (const lot of lots) {
         const card = document.createElement('div');
         card.className = 'card p-3 mb-4 shadow-sm';
@@ -202,9 +216,36 @@ function promptReservation(spotId) {
     new bootstrap.Modal(document.getElementById('reserveModal')).show();
 }
 
-function promptRelease(spotId) {
+async function promptRelease(spotId) {
     currentSpotAction = { type: 'release', spotId };
-    // Here you could add logic to fetch reservation details if needed
+    const res = await fetch(`/api/reservation/${spotId}/${userId}`);
+    const reservation = await res.json();
+    console.log(reservation)
+    document.getElementById('release-reservation-id').value = reservation.id;
+    document.getElementById('release-spot-id').value = reservation.spot_id;
+    document.getElementById('release-lot-name').value = reservation.lot_name;
+    document.getElementById('release-vehicle-number').value = reservation.vehicle_no;
+    document.getElementById('release-start-time').value = reservation.parking_timestamp;
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+    document.getElementById('release-end-time').value = now;
+    const cost = await fetch(`/api/reservations/cost`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            start_time: reservation.parking_timestamp,
+            end_time: now,
+            price_per_hour: reservation.price_per_hour
+        })
+    });
+    const costData = await cost.json();
+    document.getElementById('release-total-cost').value = costData['cost'];
+    document.getElementById('release-spot-id').disabled = true;
+    document.getElementById('release-lot-name').disabled = true;
+    document.getElementById('release-vehicle-number').disabled = true;
+    document.getElementById('release-start-time').disabled = true;
+    document.getElementById('release-reservation-id').disabled = true;
+    document.getElementById('release-end-time').disabled = true;
+    document.getElementById('release-total-cost').disabled = true;
     new bootstrap.Modal(document.getElementById('releaseModal')).show();
 }
 
