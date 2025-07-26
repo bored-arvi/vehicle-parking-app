@@ -37,6 +37,7 @@ def user_login():
         if check_user_exists(cursor, username):
             session['role'] = 'user'
             session['username'] = username
+            session['user_id'] = check_user_exists(cursor, username)[0]
             return redirect('/user/dashboard')
         else:
             return "Invalid credentials", 401

@@ -1,4 +1,4 @@
-# controllers/parking_spots_api.py
+# api/parking_spots_api.py
 from flask import Blueprint, request, jsonify
 import sqlite3
 from models.parking_spot import (
