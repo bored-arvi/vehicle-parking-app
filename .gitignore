@@ -1,0 +1,9 @@
+# Ignore compiled Python files
+*.pyc
+__pycache__/
+
+# Ignore compiled Cython files
+*.cpython-38-*.pyc
+
+# Ignore SQLite database
+*.db
