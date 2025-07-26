@@ -20,6 +20,16 @@
 <!-- Hidden user info -->
 <div id="user-info" data-user="{{ session['user_id'] }}"></div>
 
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  socket.on('spot_updated', () => {
+    fetchLots();
+    fetchUserReservations?.();
+  });
+</script>
+
+
 <!-- Navbar -->
 <nav class="navbar navbar-dark bg-dark p-3">
     <div class="container-fluid">
@@ -138,16 +148,20 @@ document.getElementById('reserve-form').addEventListener('submit', async (e) => 
 
 document.getElementById('release-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const reservationId = document.getElementById('release-reservation-id').value;
-  const parking_timestamp=document.getElementById('release-end-time').value;
-  const total_cost=document.getElementById('release-total-cost').value;
-  const spotId= document.getElementById('release-spot-id').value;
+    const reservationId = document.getElementById('release-reservation-id').value;
+    const leaving_timestamp = document.getElementById('release-end-time').value;
+    const total_cost = document.getElementById('release-total-cost').value;
+    const spotId = document.getElementById('release-spot-id').value;
 
-  const res = await fetch(`/api/reservations/release/${reservationId}`, { 
-    method: 'POST' ,
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ parking_timestamp: parking_timestamp, total_cost: total_cost})
-  });
+    const res = await fetch(`/api/reservations/release/${reservationId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        leaving_timestamp: leaving_timestamp,
+        total_cost: total_cost
+    })
+});
+
   if (res.ok) {
     const data = await res.json();
     alert(`Spot released. Total cost: ₹${data.cost}`);
@@ -220,10 +234,8 @@ async function promptRelease(spotId) {
     currentSpotAction = { type: 'release', spotId };
     const res = await fetch(`/api/reservation/${spotId}/${userId}`);
     const reservation = await res.json();
-    console.log(reservation)
     document.getElementById('release-reservation-id').value = reservation.id;
     document.getElementById('release-spot-id').value = reservation.spot_id;
-    document.getElementById('release-lot-name').value = reservation.lot_name;
     document.getElementById('release-vehicle-number').value = reservation.vehicle_no;
     document.getElementById('release-start-time').value = reservation.parking_timestamp;
     const now = new Date().toISOString().slice(0, 19).replace("T", " ");
@@ -238,9 +250,9 @@ async function promptRelease(spotId) {
         })
     });
     const costData = await cost.json();
+    console.log(costData);
     document.getElementById('release-total-cost').value = costData['cost'];
     document.getElementById('release-spot-id').disabled = true;
-    document.getElementById('release-lot-name').disabled = true;
     document.getElementById('release-vehicle-number').disabled = true;
     document.getElementById('release-start-time').disabled = true;
     document.getElementById('release-reservation-id').disabled = true;

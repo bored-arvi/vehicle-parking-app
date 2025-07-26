@@ -6,7 +6,7 @@ from models.reservations import (
     calculate_parking_cost, get_reservations_by_user,
     get_parking_timestamp, release_reservation
 )
-import datetime
+from extensions import socketio
 
 reservations_bp = Blueprint('reservations_bp', __name__)
 
@@ -33,6 +33,7 @@ def api_add_reservation():
         add_reservation(cursor, spot_id, user_id, vehicle_no)
         conn.commit()
 
+    socketio.emit('spot_updated')
     return jsonify({'message': 'Reservation added successfully'}), 201
 
 @reservations_bp.route('/api/reservations/cost', methods=['POST'])
@@ -64,7 +65,7 @@ def api_release_reservation(reservation_id):
     with get_db() as conn:
         cursor = conn.cursor()
         data=request.json
-        leaving_timestamp=data['parking_timestamp']
+        leaving_timestamp=data['leaving_timestamp']
         parking_cost=data['total_cost']
 
         if not parking_cost or not leaving_timestamp:
@@ -73,6 +74,7 @@ def api_release_reservation(reservation_id):
         release_reservation(cursor, reservation_id, leaving_timestamp, parking_cost)
         conn.commit()
 
+    socketio.emit('spot_updated')
     return jsonify({'message': 'Reservation released successfully', 'cost': parking_cost}), 200
 
 @reservations_bp.route('/api/reservations/timestamp/<int:reservation_id>', methods=['GET'])

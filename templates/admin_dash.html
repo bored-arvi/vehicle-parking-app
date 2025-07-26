@@ -55,6 +55,15 @@
 </head>
 <body>
 
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  socket.on('spot_updated', () => {
+    fetchParkingLots();
+  });
+</script>
+
+
 <!-- Sidebar -->
 <div class="sidebar">
     <h4 class="text-center py-4"><i class="bi bi-car-front"></i> Parking Admin</h4>

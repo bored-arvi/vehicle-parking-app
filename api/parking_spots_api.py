@@ -1,4 +1,3 @@
-# api/parking_spots_api.py
 from flask import Blueprint, request, jsonify
 import sqlite3
 from models.parking_spot import (
@@ -6,7 +5,8 @@ from models.parking_spot import (
     reserve_parking_spot, release_parking_spot,
     get_available_spots, get_multiple_parking_status, get_total_spots
 )
-from models.parking_lot import  add_parking_lot_spots,get_parking_lots 
+from models.parking_lot import add_parking_lot_spots, get_parking_lots
+from extensions import socketio 
 
 parking_spot_bp = Blueprint('parking_spot_bp', __name__)
 
@@ -38,7 +38,6 @@ def api_add_spot():
         return jsonify({'error': 'Lot not found'}), 404
 
     max_spots = result[0]
-
     if current_count >= max_spots:
         return jsonify({'error': 'Max spot limit reached'}), 400
 
@@ -46,8 +45,8 @@ def api_add_spot():
     conn.commit()
     conn.close()
 
+    socketio.emit('spot_updated')  # 🔁 Notify clients
     return jsonify({'message': 'Parking spot added'}), 201
-
 
 @parking_spot_bp.route('/api/spot/delete/<int:spot_id>', methods=['DELETE'])
 def api_delete_spot(spot_id):
@@ -56,6 +55,8 @@ def api_delete_spot(spot_id):
     delete_parking_spot(cursor, spot_id)
     conn.commit()
     conn.close()
+
+    socketio.emit('spot_updated')  # 🔁 Notify clients
     return jsonify({'message': f'Spot {spot_id} deleted'}), 200
 
 @parking_spot_bp.route('/api/spot/reserve/<int:spot_id>', methods=['POST'])
@@ -65,6 +66,8 @@ def api_reserve_spot(spot_id):
     reserve_parking_spot(cursor, spot_id)
     conn.commit()
     conn.close()
+
+    socketio.emit('spot_updated')  # 🔁 Notify clients
     return jsonify({'message': f'Spot {spot_id} reserved'}), 200
 
 @parking_spot_bp.route('/api/spot/release/<int:spot_id>', methods=['POST'])
@@ -74,6 +77,8 @@ def api_release_spot(spot_id):
     release_parking_spot(cursor, spot_id)
     conn.commit()
     conn.close()
+
+    socketio.emit('spot_updated')  # 🔁 Notify clients
     return jsonify({'message': f'Spot {spot_id} released'}), 200
 
 @parking_spot_bp.route('/api/spot/available/<int:lot_id>', methods=['GET'])
@@ -95,16 +100,15 @@ def add_lot_with_spots():
 
     if not all([name, price, max_spots]):
         return jsonify({'error': 'Missing required fields'}), 400
-    
+
     conn = get_db()
     cursor = conn.cursor()
     add_parking_lot_spots(cursor, name, price, address, pincode, max_spots)
     conn.commit()
     conn.close()
 
+    socketio.emit('spot_updated')  # 🔁 Notify clients
     return jsonify({'message': 'Parking lot and spots added successfully'}), 201
-
-
 
 @parking_spot_bp.route('/api/lots', methods=['GET'])
 def api_get_parking_lots():
@@ -121,6 +125,8 @@ def api_delete_parking_lot(lot_id):
     cursor.execute('DELETE FROM parking_lots WHERE id = ?', (lot_id,))
     conn.commit()
     conn.close()
+
+    socketio.emit('spot_updated')  # 🔁 Notify clients
     return jsonify({'message': f'Parking lot {lot_id} deleted'}), 200
 
 @parking_spot_bp.route('/api/lot/update', methods=['PUT'])
@@ -144,6 +150,8 @@ def update_parking_lot():
         WHERE id = ?
     ''', (name, price, address, pincode, max_spots, lot_id))
     db.commit()
+
+    socketio.emit('spot_updated')  # 🔁 Notify clients
     return jsonify({'message': 'Lot updated successfully'}), 200
 
 @parking_spot_bp.route('/api/spot/status/<int:lot_id>', methods=['GET'])
