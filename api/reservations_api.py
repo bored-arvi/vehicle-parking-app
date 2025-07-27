@@ -7,6 +7,7 @@ from models.reservations import (
     get_parking_timestamp, release_reservation
 )
 from extensions import socketio
+from models.user import get_user
 
 reservations_bp = Blueprint('reservations_bp', __name__)
 
@@ -30,11 +31,14 @@ def api_add_reservation():
 
     with get_db() as conn:
         cursor = conn.cursor()
-        add_reservation(cursor, spot_id, user_id, vehicle_no)
+        res=add_reservation(cursor, spot_id, user_id, vehicle_no)
         conn.commit()
 
-    socketio.emit('spot_updated')
-    return jsonify({'message': 'Reservation added successfully'}), 201
+    if isinstance(res, dict) and 'error' in res:
+        return jsonify(res), 400
+    else:
+        socketio.emit('spot_updated')
+        return jsonify({'message': 'Reservation added successfully'}), 201
 
 @reservations_bp.route('/api/reservations/cost', methods=['POST'])
 def api_calculate_cost():  
@@ -102,3 +106,27 @@ def api_get_reservation(reservation_id, user_id):
 
     return jsonify(dict(reservation)), 200
 
+@reservations_bp.route('/api/admin/active-reservations', methods=['GET'])
+def api_active_reservations():
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT r.user_id, r.vehicle_no, r.spot_id, r.parking_timestamp, pl.prime_location_name AS lot_name
+            FROM reservations r
+            JOIN parking_spots ps ON ps.id = r.spot_id
+            JOIN parking_lots pl ON ps.lot_id = pl.id
+            WHERE r.leaving_timestamp IS NULL
+        ''')
+        data = cursor.fetchall()
+    return jsonify([dict(row) for row in data]), 200
+
+@reservations_bp.route('/api/admin/registered-users', methods=['GET'])
+def get_users_api():
+    with get_db() as conn:
+        cursor = conn.cursor()
+        users = get_user(cursor)
+
+    if not users:
+        return jsonify({'message': 'No users found'}), 404
+
+    return jsonify([dict(user) for user in users]), 200

@@ -3,6 +3,7 @@ def create_user_table(cursor):
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
@@ -10,13 +11,13 @@ def create_user_table(cursor):
             is_admin BOOLEAN DEFAULT FALSE
         )
     ''')
-    create_user(cursor,'arvi', 'pass', 'admin@gmail.com', '1234567890', True)
+    create_user(cursor,'aravinth k','arvi', 'pass', 'admin@gmail.com', '1234567890', True)
 
-def create_user(cursor, username, password, email, phone=None, is_admin=False):
+def create_user(cursor,name, username, password, email, phone=None, is_admin=False):
     cursor.execute('''
-        INSERT OR IGNORE INTO users (username, password, email, phone, is_admin)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (username, password, email, phone, is_admin))
+        INSERT OR IGNORE INTO users (name,username, password, email, phone, is_admin)
+        VALUES (?,?, ?, ?, ?, ?)
+    ''', (name,username, password, email, phone, is_admin))
 
 
 def check_user_exists(cursor,username):
@@ -24,3 +25,10 @@ def check_user_exists(cursor,username):
         SELECT * FROM users WHERE username = ?
     ''', (username,))
     return cursor.fetchone()
+
+def get_user(cursor):
+    cursor.execute('''
+        SELECT * FROM users
+    ''')
+    return cursor.fetchall()
+
