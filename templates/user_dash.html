@@ -277,22 +277,47 @@ async function performSpotAction() {
 document.getElementById('confirm-action-btn')?.addEventListener('click', performSpotAction);
 
 async function fetchUserReservations() {
-    const res = await fetch('/api/user/reservations');
+    const res = await fetch('/api/reservations/user/' + userId, { method: 'GET' });
     const data = await res.json();
     const container = document.getElementById('user-reservations');
-    container.innerHTML = data.length === 0 ? '<p>No active reservations.</p>' : '';
+
+    if (data.length === 0) {
+        container.innerHTML = '<p>No active reservations.</p>';
+        return;
+    }
+
+    let table = `
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Vehicle No</th>
+                    <th>Start Time</th>
+                    <th>End / Action</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
 
     data.forEach(r => {
-        const div = document.createElement('div');
-        div.className = 'border p-2 mb-2 rounded bg-white';
-        div.innerHTML = `
-            <strong>Spot:</strong> ${r.spot_id} | 
-            <strong>Lot:</strong> ${r.lot_name} | 
-            <strong>Status:</strong> ${r.status}
+        table += `
+            <tr>
+                <td>${r.id}</td>
+                <td>${r.vehicle_no}</td>
+                <td>${r.parking_timestamp}</td>
+                <td>
+                    ${r.leaving_timestamp 
+                        ? r.leaving_timestamp 
+                        : `<button class="btn btn-danger btn-sm" onclick="promptRelease(${r.spot_id})">Release</button>`}
+                </td>
+            </tr>
         `;
-        container.appendChild(div);
     });
+
+    table += '</tbody></table>';
+    container.innerHTML = table;
 }
+
 
 window.onload = () => {
     fetchLots();

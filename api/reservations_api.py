@@ -101,3 +101,4 @@ def api_get_reservation(reservation_id, user_id):
         return jsonify({'message': 'Reservation not found'}), 404
 
     return jsonify(dict(reservation)), 200
+

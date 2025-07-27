@@ -9,7 +9,7 @@ def create_reservations_table(cursor):
             parking_timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
             leaving_timestamp TEXT,
             parking_cost REAL DEFAULT 0,
-            vehicle_no TEXT NOT NULL,
+            vehicle_no TEXT NOT NULL UNIQUE,
             price_per_hour REAL NOT NULL,
             FOREIGN KEY (spot_id) REFERENCES parking_spots(id)
         )
@@ -54,8 +54,5 @@ def release_reservation(cursor, reservation_id,leaving_timestamp,parking_cost):
             SET leaving_timestamp = ?, parking_cost = ?
             WHERE id = ?
         ''', (leaving_timestamp, parking_cost, reservation_id))
-        
-        cursor.execute('''
-            DELETE FROM reservations WHERE id = ?
-        ''', (reservation_id,))
+
 
