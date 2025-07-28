@@ -1,88 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard - Parking Lots</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            display: flex;
-        }
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            background: #343a40;
-            color: white;
-            position: fixed;
-        }
-        .sidebar a {
-            display: block;
-            padding: 15px;
-            color: white;
-            text-decoration: none;
-        }
-        .sidebar a:hover {
-            background: #495057;
-        }
-        .main {
-            margin-left: 250px;
-            padding: 20px;
-            width: 100%;
-        }
-        .lot-card {
-            margin-bottom: 20px;
-        }
-        .dropdown-toggle::after {
-            margin-left: 8px;
-        }
-        .spot-card {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            min-width: 80px;
-            text-align: center;
-        }
-        .spot-card {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            min-width: 80px;
-            text-align: center;
-            cursor: pointer;
-        }
-
-    </style>
+  <meta charset="UTF-8">
+  <title>Admin Search - Parking System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .spot-card {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      min-width: 80px;
+      text-align: center;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-<script>
-  const socket = io();
-  socket.on('spot_updated', () => {
-    fetchParkingLots();
-  });
-</script>
+<!-- Top Navbar with toggle buttons -->
+<nav class="navbar navbar-light bg-light justify-content-between px-3">
+  <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar">
+    ☰ 
+  </button>
+  <button class="btn btn-outline-primary" data-bs-toggle="offcanvas" data-bs-target="#filterPanel">
+    ☰ Filters
+  </button>
+</nav>
 
+<!-- Admin Sidebar -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Admin Panel</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <a href="/admin/dashboard" class="d-block py-2 text-dark">Dashboard</a>
+    <a href="/admin/dashboard/users" class="d-block py-2 text-dark">Users</a>
+    <a href="/admin/dashboard/search" class="d-block py-2 text-dark">Search</a>
+    <a href="/logout" class="d-block py-2 text-dark">Logout</a>
+  </div>
+</div>
 
-<!-- Sidebar -->
-<div class="sidebar">
-    <h4 class="text-center py-4"><i class="bi bi-car-front"></i> Parking Admin</h4>
-    <a href="/admin/dashboard/users">Users</a>
-    <a href="/admin/dashboard/search">Search</a>
-    <a href="#">Spots</a>
-    <a href="#">Reservations</a>
-    <a href="/logout">Logout</a>
+<!-- Filter Sidebar -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="filterPanel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Filter Lots</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form id="filter-form">
+      <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input type="text" class="form-control" name="location">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Pincode</label>
+        <input type="text" class="form-control" name="pincode">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Availability</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="availability" value="available">
+          <label class="form-check-label">Available</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="availability" value="occupied">
+          <label class="form-check-label">Occupied</label>
+        </div>
+      </div>
+      <button class="btn btn-primary w-100" type="submit">Apply Filters</button>
+    </form>
+  </div>
 </div>
 
 <!-- Main Content -->
-<div class="main">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Parking Lots</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLotModal">+ Add Lot</button>
-    </div>
-    <div id="lots-container"></div>
+<div class="container mt-4">
+  <h2>Search Parking Lots and Spots</h2>
+  <div id="search-results"></div>
 </div>
-
 <!-- Add Lot Modal -->
 <div class="modal fade" id="addLotModal" tabindex="-1" aria-labelledby="addLotModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -183,9 +178,99 @@
     </form>
   </div>
 </div>
-<!-- Bootstrap + JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Scripts -->
 <script>
+document.getElementById('filter-form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  performSearch();
+});
+
+async function performSearch() {
+  const form = document.getElementById('filter-form');
+  const formData = new FormData(form);
+  const params = new URLSearchParams();
+
+  const keys = new Set();
+  for (const [key, _] of formData.entries()) {
+    keys.add(key);
+  }
+
+  for (const key of keys) {
+    const values = formData.getAll(key);
+    values.forEach(val => {
+      if (val.trim()) params.append(key, val.trim());
+    });
+  }
+
+  const url = new URL('/api/search', window.location.origin);
+  url.search = params.toString();
+
+  try {
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    renderResults(data);
+  } catch (err) {
+    console.error('Search failed:', err);
+  }
+}
+
+function renderResults(lots) {
+  const container = document.getElementById('search-results');
+  container.innerHTML = '';
+  if (!lots.length) {
+    container.innerHTML = '<p class="text-danger">No results found.</p>';
+    return;
+  }
+
+  lots.forEach(lot => {
+    const card = document.createElement('div');
+    card.setAttribute('data-lot-id', lot.lot_id);
+    card.className = 'card p-3 mb-4 shadow-sm';
+    card.innerHTML = `
+      <div class="d-flex justify-content-between">
+        <h5>${lot.prime_location_name}</h5>
+        <div class="dropdown">
+          <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"></button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick='openEditModal(${JSON.stringify(lot)})'>Edit Lot</a></li>
+            <li><a class="dropdown-item text-danger" onclick="deleteLot(${lot.lot_id})">Delete Lot</a></li>
+          </ul>
+        </div>
+      </div>
+      <p>Pincode: ${lot.pin_code}</p>
+      <p>Price: ₹${lot.price} per hour</p>
+      <div class="d-flex flex-wrap gap-2" id="spots-${lot.lot_id}">Loading spots...</div>
+    `;
+    container.appendChild(card);
+    loadSpots(lot.lot_id);
+  });
+}
+
+async function loadSpots(lotId) {
+  const container = document.getElementById(`spots-${lotId}`);
+  const res = await fetch(`/api/spot/status/${lotId}`);
+  if (!res.ok) {
+    container.innerHTML = '<small class="text-danger">Error loading spots.</small>';
+    return;
+  }
+  const spots = await res.json();
+  container.innerHTML = '';
+  spots.forEach(s => {
+    const spot = document.createElement('div');
+    spot.className = 'spot-card';
+    spot.style.backgroundColor = s.status === 'O' ? '#f8d7da' : '#d4edda';
+    spot.textContent = s.id;
+    spot.onclick = () => showSpotModal(s);
+    container.appendChild(spot);
+  });
+  const addBtn = document.createElement('div');
+  addBtn.className = 'spot-card text-success border-success';
+  addBtn.style.borderStyle = 'dashed';
+  addBtn.textContent = '+ Add Spot';
+  addBtn.onclick = () => openAddSpotModal(lotId);
+  container.appendChild(addBtn);
+}
+
 document.getElementById('editLotForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = { 
@@ -204,9 +289,19 @@ document.getElementById('editLotForm').addEventListener('submit', async (e) => {
     });
 
     if (res.ok) {
-        bootstrap.Modal.getInstance(document.getElementById('editLotModal')).hide();
-        fetchParkingLots();
-    } else {
+    bootstrap.Modal.getInstance(document.getElementById('editLotModal')).hide();
+
+    const updatedLot = await res.json(); // Make your API return the updated lot data
+
+    // Update the card in-place
+    const card = document.querySelector(`[data-lot-id="${updatedLot.id}"]`);
+    if (card) {
+        card.querySelector('h5').textContent = updatedLot.prime_location_name;
+        card.querySelector('p:nth-of-type(1)').textContent = `Pincode: ${updatedLot.pin_code}`;
+        card.querySelector('p:nth-of-type(2)').textContent = `Price: ₹${updatedLot.price} per hour`;
+    }
+    }
+    else {
         alert("Failed to update lot.");
     }
 });
@@ -231,7 +326,7 @@ document.getElementById('addLotForm').addEventListener('submit', async (e) => {
     if (res.ok) {
         form.reset();
         bootstrap.Modal.getInstance(document.getElementById('addLotModal')).hide();
-        fetchParkingLots();
+        renderResults();
     } else {
         const errorData = await res.json();
         alert('Failed to add lot: ' + (errorData.error || 'Unknown error.'));
@@ -251,7 +346,7 @@ document.getElementById('addSpotForm').addEventListener('submit', async (e) => {
 
     if (res.ok) {
         bootstrap.Modal.getInstance(document.getElementById('spotAddModal')).hide();
-        fetchParkingLots();
+        loadSpots(lotId);
     } else {
         errorData = await res.json();
         alert('Error adding spot: ' + (errorData.error || 'Unknown error'));
@@ -267,92 +362,24 @@ function openEditModal(lot) {
     document.getElementById('edit-max-spots').value = lot.max_spots;
     new bootstrap.Modal(document.getElementById('editLotModal')).show();
 }
-
-async function fetchParkingLots() {
-    const res = await fetch('/api/lots');
-    const lots = await res.json();
-    const container = document.getElementById('lots-container');
-    container.innerHTML = '';
-
-    lots.forEach(lot => {
-        const card = document.createElement('div');
-        card.className = 'card p-3 mb-4 shadow-sm';
-
-        card.innerHTML = `
-            <div class="d-flex justify-content-between">
-                <h5>${lot.prime_location_name}</h5>
-                <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"></button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick='openEditModal(${JSON.stringify(lot)})'>Edit Lot</a></li>
-                        <li><a class="dropdown-item text-danger" onclick="deleteLot(${lot.id})">Delete Lot</a></li>
-                    </ul>
-                </div>
-            </div>
-            <p>Price: ₹${lot.price}</p>
-            <p>Pincode: ${lot.pin_code}</p>
-            <p>Max Spots: ${lot.max_spots}</p>
-            <div class="d-flex flex-wrap gap-2" id="spots-${lot.id}">Loading spots...</div>
-        `;
-
-        container.appendChild(card);
-        renderSpots(lot.id);
+function deleteLot(id) {
+  if (!confirm('Are you sure to delete this lot?')) return;
+  fetch(`/api/lot/delete/${id}`, { method: 'DELETE' })
+    .then(res => {
+      if (res.ok) {
+        const card = document.querySelector(`[data-lot-id="${id}"]`);
+        if (card) card.remove();
+      } else {
+        alert('Failed to delete lot.');
+      }
     });
-}
-
-let currentAddLotId = null;
-
-function openAddSpotModal(lotId) {
-    document.getElementById('add-spot-lot-id').value = lotId;
-    document.getElementById('add-spot-status').value = 'A';
-    new bootstrap.Modal(document.getElementById('spotAddModal')).show();
-}
-
-
-async function renderSpots(lotId) {
-    const container = document.getElementById(`spots-${lotId}`);
-    const res = await fetch(`/api/spot/status/${lotId}`);
-    if (!res.ok) {
-        container.innerHTML = '<small class="text-danger">Failed to load spots</small>';
-        return;
-    }
-
-    const spots = await res.json();
-    if (spots.length === 0) {
-        container.innerHTML = '<small>No spots in this lot</small>';
-        return;
-    }
-
-    container.innerHTML = '';
-    spots.forEach(s => {
-        const spot = document.createElement('div');
-        spot.className = 'spot-card';
-        spot.style.backgroundColor = s.status === 'O' ? '#f8d7da' : '#d4edda';
-        spot.innerHTML = `${s.id}`;
-        spot.onclick = () => showSpotModal(s);
-        container.appendChild(spot);
-    });
-    const addBtn = document.createElement('div');
-    addBtn.className = 'spot-card text-success border-success';
-    addBtn.style.borderStyle = 'dashed';
-    addBtn.innerHTML = '+ Add Spot';
-    addBtn.onclick = () => openAddSpotModal(lotId);
-    container.appendChild(addBtn);
-}
-
-
-
-async function deleteLot(id) {
-    if (!confirm("Delete this lot?")) return;
-    const res = await fetch(`/api/lot/delete/${id}`, { method: 'DELETE' });
-    if (res.ok) fetchParkingLots();
-    else alert('Failed to delete');
 }
 
 function showSpotModal(spot) {
     document.getElementById('spot-id').value = spot.id;
     document.getElementById('spot-number').value = spot.number || spot.id;
     document.getElementById('spot-status').value = spot.status || 'available';
+    document.getElementById('spot-lot-id').value = spot.lot_id;
     new bootstrap.Modal(document.getElementById('spotDetailModal')).show();
 }
 
@@ -381,7 +408,7 @@ document.getElementById('spotDetailForm').addEventListener('submit', async (e) =
 
     if (res.ok) {
         bootstrap.Modal.getInstance(document.getElementById('spotDetailModal')).hide();
-        fetchParkingLots();
+        loadSpots(lotId);
     } else {
         alert('Failed to process spot.');
     }
@@ -393,13 +420,13 @@ async function deleteSpot() {
     const res = await fetch(`/api/spot/delete/${spotId}`, { method: 'DELETE' });
     if (res.ok) {
         bootstrap.Modal.getInstance(document.getElementById('spotDetailModal')).hide();
-        fetchParkingLots();
+        loadSpots(document.getElementById('spot-lot-id').value);
     } else {
         alert('Failed to delete spot.');
     }
 }
-
-window.onload = fetchParkingLots;
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

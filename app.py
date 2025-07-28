@@ -6,6 +6,7 @@ from api.parking_spots_api import parking_spot_bp
 from api.reservations_api import reservations_bp
 from models.db_init import init_db
 from flask_socketio import SocketIO
+from api.search_api import search_bp
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -15,6 +16,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(parking_spot_bp)
 app.register_blueprint(reservations_bp)
+app.register_blueprint(search_bp)
 socketio.init_app(app)
 
 @app.route('/')

@@ -24,3 +24,10 @@ def admin_users():
     else:
         return "Unauthorized", 403
 
+@dashboard_bp.route('/dashboard/search', methods=['GET'])
+def search_lots():
+    if 'role' in session and session['role'] == 'admin':
+        return render_template('admin_search.html')
+    else:
+        return "Unauthorized", 403
+
