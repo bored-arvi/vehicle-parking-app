@@ -52,12 +52,20 @@ def api_add_spot():
 def api_delete_spot(spot_id):
     conn = get_db()
     cursor = conn.cursor()
-    delete_parking_spot(cursor, spot_id)
+
+    cursor.execute("SELECT status FROM parking_spots WHERE id = ?", (spot_id,))
+    row = cursor.fetchone()
+    if row and row[0] == 'O':
+        conn.close()
+        return jsonify({'error': 'Cannot delete: Spot is currently occupied.'}), 400
+
+    cursor.execute("DELETE FROM parking_spots WHERE id = ?", (spot_id,))
     conn.commit()
     conn.close()
 
-    socketio.emit('spot_updated')  # 🔁 Notify clients
+    socketio.emit('spot_updated')
     return jsonify({'message': f'Spot {spot_id} deleted'}), 200
+
 
 @parking_spot_bp.route('/api/spot/reserve/<int:spot_id>', methods=['POST'])
 def api_reserve_spot(spot_id):
@@ -123,17 +131,21 @@ def api_delete_parking_lot(lot_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    # Delete spots of the lot first
-    cursor.execute('DELETE FROM parking_spots WHERE lot_id = ?', (lot_id,))
+    # Check for occupied spots
+    cursor.execute("SELECT COUNT(*) FROM parking_spots WHERE lot_id = ? AND status = 'O'", (lot_id,))
+    if cursor.fetchone()[0] > 0:
+        conn.close()
+        return jsonify({'error': 'Cannot delete lot: one or more spots are occupied.'}), 400
 
-    # Then delete the lot
+    # Delete spots and then lot
+    cursor.execute('DELETE FROM parking_spots WHERE lot_id = ?', (lot_id,))
     cursor.execute('DELETE FROM parking_lots WHERE id = ?', (lot_id,))
-    
     conn.commit()
     conn.close()
 
-    socketio.emit('spot_updated')  # 🔁 Notify clients
-    return jsonify({'message': f'Parking lot {lot_id} and its spots deleted'}), 200
+    socketio.emit('spot_updated')
+    return jsonify({'message': f'Lot {lot_id} and its spots deleted'}), 200
+
 
 
 @parking_spot_bp.route('/api/lot/update', methods=['PUT'])

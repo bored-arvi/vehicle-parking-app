@@ -346,7 +346,10 @@ async function deleteLot(id) {
     if (!confirm("Delete this lot?")) return;
     const res = await fetch(`/api/lot/delete/${id}`, { method: 'DELETE' });
     if (res.ok) fetchParkingLots();
-    else alert('Failed to delete');
+    else{
+      errorData = await res.json();
+      alert('Error deleting lot: ' + (errorData.error || 'Unknown error'));
+    }
 }
 
 function showSpotModal(spot) {
@@ -395,7 +398,9 @@ async function deleteSpot() {
         bootstrap.Modal.getInstance(document.getElementById('spotDetailModal')).hide();
         fetchParkingLots();
     } else {
-        alert('Failed to delete spot.');
+        const errorData = await res.json();
+        alert('Error: ' + errorData.error);
+        
     }
 }
 
