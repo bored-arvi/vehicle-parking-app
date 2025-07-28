@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Chart Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .chart-container { width: 90%; max-width: 800px; margin: 30px auto; }
+    canvas { display: block; margin: auto; }
+    select { display: block; margin: 10px auto; padding: 6px; }
+    h2 { text-align: center; }
+  </style>
+</head>
+<body>
+
+<h2>Admin Chart Dashboard</h2>
+
+<!-- Lot Dropdown -->
+<div class="chart-container">
+  <label for="lotSelect"><strong>Select Parking Lot:</strong></label>
+  <select id="lotSelect"></select>
+</div>
+
+<!-- Charts -->
+<div class="chart-container"><canvas id="overallStatusChart"></canvas></div>
+<div class="chart-container"><canvas id="monthlyRevenueChart"></canvas></div>
+<div class="chart-container"><canvas id="lotStatusChart"></canvas></div>
+<div class="chart-container"><canvas id="lotDailyChart"></canvas></div>
+<div class="chart-container"><canvas id="topLotsChart"></canvas></div>
+
+<script>
+  let lotStatusChart = null;
+  let lotDailyChart = null;
+
+  // Load lot names for dropdown
+  fetch('/api/chart/admin/lot-names')
+    .then(res => res.json())
+    .then(lots => {
+      const select = document.getElementById('lotSelect');
+      lots.forEach(lot => {
+        const opt = document.createElement('option');
+        opt.value = lot;
+        opt.textContent = lot;
+        select.appendChild(opt);
+      });
+      if (lots.length) updateLotCharts(lots[0]);
+    });
+
+  document.getElementById('lotSelect').addEventListener('change', e => {
+    updateLotCharts(e.target.value);
+  });
+
+  function updateLotCharts(lot) {
+    // Spot status pie chart per lot
+    fetch(`/api/chart/admin/lot-status?lot=${encodeURIComponent(lot)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (lotStatusChart) lotStatusChart.destroy();
+        lotStatusChart = new Chart(document.getElementById('lotStatusChart'), {
+          type: 'pie',
+          data: {
+            labels: ['Available', 'Occupied'],
+            datasets: [{ data: data.map(d => d.count), backgroundColor: ['#34d399', '#f87171'] }]
+          },
+          options: {
+            plugins: { title: { display: true, text: `Status of Spots in ${lot}` } },
+            responsive: true
+          }
+        });
+      });
+
+    // Daily activity line chart per lot
+    fetch(`/api/chart/admin/lot-daily-activity?lot=${encodeURIComponent(lot)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (lotDailyChart) lotDailyChart.destroy();
+        lotDailyChart = new Chart(document.getElementById('lotDailyChart'), {
+          type: 'line',
+          data: {
+            labels: data.map(d => d.date),
+            datasets: [{ label: 'Reservations', data: data.map(d => d.count), borderColor: '#60a5fa', fill: false }]
+          },
+          options: {
+            plugins: { title: { display: true, text: `Last 30 Days Activity for ${lot}` } },
+            responsive: true
+          }
+        });
+      });
+  }
+
+  // Static Charts
+
+  // Overall Spot Status
+  fetch('/api/chart/admin/spot-status')
+    .then(res => res.json())
+    .then(data => {
+      new Chart(document.getElementById('overallStatusChart'), {
+        type: 'pie',
+        data: {
+          labels: ['Available', 'Occupied'],
+          datasets: [{ data: data.map(d => d.count), backgroundColor: ['#34d399', '#f87171'] }]
+        },
+        options: {
+          plugins: { title: { display: true, text: 'Overall Spot Status' } },
+          responsive: true
+        }
+      });
+    });
+
+  // Monthly Revenue
+  fetch('/api/chart/admin/monthly-revenue')
+    .then(res => res.json())
+    .then(data => {
+      new Chart(document.getElementById('monthlyRevenueChart'), {
+        type: 'line',
+        data: {
+          labels: data.map(d => d.month),
+          datasets: [{ label: 'Revenue (₹)', data: data.map(d => d.revenue), borderColor: '#fbbf24', fill: false }]
+        },
+        options: {
+          plugins: { title: { display: true, text: 'Monthly Revenue' } },
+          responsive: true
+        }
+      });
+    });
+
+  // Top Lots
+  fetch('/api/chart/admin/top-lots')
+    .then(res => res.json())
+    .then(data => {
+      new Chart(document.getElementById('topLotsChart'), {
+        type: 'bar',
+        data: {
+          labels: data.map(d => d.lot),
+          datasets: [{ label: 'Reservations', data: data.map(d => d.count), backgroundColor: '#c084fc' }]
+        },
+        options: {
+          plugins: { title: { display: true, text: 'Top Lots by Reservations' } },
+          responsive: true
+        }
+      });
+    });
+</script>
+
+</body>
+</html>

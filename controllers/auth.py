@@ -46,3 +46,9 @@ def user_login():
 @auth_bp.route('/user/charts',methods=['GET'])
 def charts():
     return render_template('user_chart.html')
+@auth_bp.route('/admin/charts',methods=['GET'])
+def admin_charts():
+    if 'role' in session and session['role'] == 'admin':
+        return render_template('admin_chart.html')
+    else:
+        return "Unauthorized", 403

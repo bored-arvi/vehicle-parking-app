@@ -1,11 +1,10 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 import sqlite3
 
 chart_bp = Blueprint('chart_bp', __name__)
 DB_PATH = 'parking.db'
 
-# 1. Spot Status Distribution
-@chart_bp.route('/api/chart/spot-status')
+@chart_bp.route('/api/chart/admin/spot-status')
 def spot_status():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -16,25 +15,8 @@ def spot_status():
     conn.close()
     return jsonify([{"status": r[0], "count": r[1]} for r in rows])
 
-# 2. Lot-wise Occupancy
-@chart_bp.route('/api/chart/lot-occupancy')
-def lot_occupancy():
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT l.prime_location_name,
-               SUM(CASE WHEN s.status = 'O' THEN 1 ELSE 0 END) AS occupied,
-               COUNT(s.id) AS total
-        FROM parking_lots l
-        LEFT JOIN parking_spots s ON l.id = s.lot_id
-        GROUP BY l.id
-    """)
-    rows = cur.fetchall()
-    conn.close()
-    return jsonify([{"lot": r[0], "occupied": r[1], "total": r[2]} for r in rows])
 
-# 3. Monthly Revenue
-@chart_bp.route('/api/chart/monthly-revenue')
+@chart_bp.route('/api/chart/admin/monthly-revenue')
 def monthly_revenue():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -49,24 +31,74 @@ def monthly_revenue():
     conn.close()
     return jsonify([{"month": r[0], "revenue": r[1]} for r in rows])
 
-# 4. Top Users by Reservations
-@chart_bp.route('/api/chart/top-users')
-def top_users():
+
+@chart_bp.route('/api/chart/admin/lot-status')
+def lot_status():
+    lot_name = request.args.get('lot')
+    if not lot_name:
+        return jsonify({"error": "Missing lot name"}), 400
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("""
-        SELECT u.username, COUNT(r.id) as count
-        FROM users u
-        JOIN reservations r ON u.user_id = r.user_id
-        GROUP BY u.user_id
-        ORDER BY count DESC
-        LIMIT 5
+        SELECT status, COUNT(*)
+        FROM parking_spots ps
+        JOIN parking_lots pl ON ps.lot_id = pl.id
+        WHERE pl.prime_location_name = ?
+        GROUP BY status
+    """, (lot_name,))
+    rows = cur.fetchall()
+    conn.close()
+    return jsonify([{"status": r[0], "count": r[1]} for r in rows])
+
+
+@chart_bp.route('/api/chart/admin/lot-daily-activity')
+def lot_daily_activity():
+    lot_name = request.args.get('lot')
+    if not lot_name:
+        return jsonify({"error": "Missing lot name"}), 400
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT DATE(r.parking_timestamp), COUNT(*)
+        FROM reservations r
+        JOIN parking_spots ps ON r.spot_id = ps.id
+        JOIN parking_lots pl ON ps.lot_id = pl.id
+        WHERE pl.prime_location_name = ? AND r.parking_timestamp >= DATE('now', '-30 days')
+        GROUP BY DATE(r.parking_timestamp)
+        ORDER BY DATE(r.parking_timestamp)
+    """, (lot_name,))
+    rows = cur.fetchall()
+    conn.close()
+    return jsonify([{"date": r[0], "count": r[1]} for r in rows])
+
+
+@chart_bp.route('/api/chart/admin/top-lots')
+def top_lots():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT pl.prime_location_name, COUNT(*) as reservation_count
+        FROM reservations r
+        JOIN parking_spots ps ON r.spot_id = ps.id
+        JOIN parking_lots pl ON ps.lot_id = pl.id
+        GROUP BY pl.id
+        ORDER BY reservation_count DESC
+        LIMIT 10
     """)
     rows = cur.fetchall()
     conn.close()
-    return jsonify([{"username": r[0], "reservations": r[1]} for r in rows])
+    return jsonify([{"lot": r[0], "count": r[1]} for r in rows])
 
-# 5. User Monthly Usage
+# Helper: List all lot names for dropdown
+@chart_bp.route('/api/chart/admin/lot-names')
+def lot_names():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT prime_location_name FROM parking_lots")
+    rows = cur.fetchall()
+    conn.close()
+    return jsonify([r[0] for r in rows])
+
 @chart_bp.route('/api/chart/user-usage/<int:user_id>')
 def user_usage(user_id):
     conn = sqlite3.connect(DB_PATH)
