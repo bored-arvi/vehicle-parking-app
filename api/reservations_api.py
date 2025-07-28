@@ -18,7 +18,6 @@ def get_db():
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA journal_mode=WAL;')
     return conn
-
 @reservations_bp.route('/api/reservations/add', methods=['POST'])
 def api_add_reservation():
     data = request.json
@@ -29,16 +28,23 @@ def api_add_reservation():
     if not all([user_id, spot_id, vehicle_no]):
         return jsonify({'error': 'All fields are required'}), 400
 
-    with get_db() as conn:
-        cursor = conn.cursor()
-        res=add_reservation(cursor, spot_id, user_id, vehicle_no)
-        conn.commit()
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
 
-    if isinstance(res, dict) and 'error' in res:
-        return jsonify(res), 400
-    else:
-        socketio.emit('spot_updated')
-        return jsonify({'message': 'Reservation added successfully'}), 201
+            # Only adds reservation; assumes spot is reserved via /api/spot/reserve
+            add_reservation(cursor, spot_id, user_id, vehicle_no)
+
+            conn.commit()
+            socketio.emit('spot_updated')
+            return jsonify({'message': 'Reservation added successfully'}), 201
+
+    except ValueError as ve:
+        return jsonify({'error': str(ve)}), 400
+
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
 
 @reservations_bp.route('/api/reservations/cost', methods=['POST'])
 def api_calculate_cost():  

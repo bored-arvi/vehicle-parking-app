@@ -9,23 +9,36 @@ def create_reservations_table(cursor):
             parking_timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
             leaving_timestamp TEXT,
             parking_cost REAL DEFAULT 0,
-            vehicle_no TEXT NOT NULL UNIQUE,
+            vehicle_no TEXT NOT NULL,
             price_per_hour REAL NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            FOREIGN KEY (user_id) REFERENCES users(user_id),
             FOREIGN KEY (spot_id) REFERENCES parking_spots(id)
         )
     ''')
 
 def add_reservation(cursor, spot_id, user_id, vehicle_no):
+    # 🚫 Check if vehicle is already reserved (no leaving_timestamp)
+    cursor.execute('''
+        SELECT COUNT(*) FROM reservations
+        WHERE vehicle_no = ? AND leaving_timestamp IS NULL
+    ''', (vehicle_no,))
+    count = cursor.fetchone()[0]
+
+    if count > 0:
+        raise ValueError("Vehicle is already actively reserved in another spot.")
+
+    # ✅ Fetch price per hour
     cursor.execute('SELECT price FROM parking_spots WHERE id = ?', (spot_id,))
     price = cursor.fetchone()
-    if price:
-        price_per_hour = price[0]
-    else:
-        price_per_hour = 0  # Default price if not found
+    price_per_hour = price[0] if price else 0
+
+    # ➕ Insert reservation
     cursor.execute('''
         INSERT INTO reservations (spot_id, user_id, vehicle_no, price_per_hour)
-        VALUES (?, ?,?,?)
-    ''', (spot_id, user_id,vehicle_no,price_per_hour))
+        VALUES (?, ?, ?, ?)
+    ''', (spot_id, user_id, vehicle_no, price_per_hour))
+
 
 def calculate_parking_cost(parking_timestamp,leaving_timestamp, price_per_hour):
     from datetime import datetime
@@ -51,7 +64,7 @@ def release_reservation(cursor, reservation_id,leaving_timestamp,parking_cost):
           
         cursor.execute('''
             UPDATE reservations
-            SET leaving_timestamp = ?, parking_cost = ?
+            SET leaving_timestamp = ?, parking_cost = ?,is_active=0
             WHERE id = ?
         ''', (leaving_timestamp, parking_cost, reservation_id))
 
