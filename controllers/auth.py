@@ -43,3 +43,6 @@ def user_login():
             return "Invalid credentials", 401
     return render_template("user.html")
 
+@auth_bp.route('/user/charts',methods=['GET'])
+def charts():
+    return render_template('user_chart.html')

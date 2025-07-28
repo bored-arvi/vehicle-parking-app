@@ -31,3 +31,7 @@ def search_lots():
     else:
         return "Unauthorized", 403
 
+@dashboard_bp.route('/charts',methods=['GET'])
+def create_charts():
+    return render_template('chart_dash.html')
+

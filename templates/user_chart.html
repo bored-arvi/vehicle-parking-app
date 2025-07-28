@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .chart-container {
+      width: 90%;
+      max-width: 800px;
+      margin: 30px auto;
+    }
+    h2 { text-align: center; }
+  </style>
+</head>
+<body>
+
+<h2>Welcome, {{ session['username'] }}</h2>
+<div id="user-info" data-userid="{{ session['user_id'] }}"></div>
+<div id="user-info" data-username="{{session['username']}}"></div>
+<!-- Chart Containers -->
+<div class="chart-container">
+  <canvas id="userMonthlyUsageChart"></canvas>
+</div>
+
+<div class="chart-container">
+  <canvas id="userTotalSpentChart"></canvas>
+</div>
+<div class="chart-container mt-4">
+  <canvas id="frequentLotsChart"></canvas>
+</div>
+<div class="chart-container mt-4">
+  <canvas id="costLineChart"></canvas>
+</div>
+<script>
+const userId = document.getElementById('user-info').dataset.userid;
+const username=document.getElementById('user-info').dataset.username;
+
+// Chart 1: User Monthly Usage
+fetch(`/api/chart/user-usage/${userId}`)
+  .then(res => res.json())
+  .then(data => {
+    const labels = data.map(d => d.month);
+    const counts = data.map(d => d.count);
+
+    new Chart(document.getElementById('userMonthlyUsageChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Reservations per Month',
+          data: counts,
+          backgroundColor: '#60a5fa'
+        }]
+      },
+      options: {
+        plugins: { title: { display: true, text: 'Monthly Reservation Usage' } },
+        responsive: true
+      }
+    });
+  });
+
+// Chart 2: User Total Spent
+fetch(`/api/chart/user-total/${userId}`)
+  .then(res => res.json())
+  .then(data => {
+    new Chart(document.getElementById('userTotalSpentChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Total ₹ Spent'],
+        datasets: [{
+          data: [data.total_spent],
+          backgroundColor: ['#facc15']
+        }]
+      },
+      options: {
+        plugins: { title: { display: true, text: 'Total Amount Spent' } },
+        responsive: true
+      }
+    });
+  });
+
+fetch(`/api/chart/user-frequent-lots/${userId}`)
+  .then(res => res.json())
+  .then(data => {
+    const labels = data.map(d => d.lot);
+    const counts = data.map(d => d.count);
+
+    new Chart(document.getElementById('frequentLotsChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'No. of Reservations',
+          data: counts,
+          backgroundColor: '#38bdf8'
+        }]
+      },
+      options: {
+        indexAxis: 'y',  // Horizontal bar
+        plugins: {
+          title: { display: true, text: 'Most Frequently Used Parking Lots' },
+          legend: { display: false }
+        },
+        responsive: true
+      }
+    });
+  });
+
+fetch(`/api/chart/user-cost-line/${userId}`)
+  .then(res => res.json())
+  .then(data => {
+    const labels = data.map(d => d.date);
+    const costs = data.map(d => d.cost);
+
+    new Chart(document.getElementById('costLineChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Parking Cost (₹)',
+          data: costs,
+          borderColor: '#8b5cf6',
+          fill: false,
+          tension: 0.3
+        }]
+      },
+      options: {
+        plugins: {
+          title: {
+            display: true,
+            text: 'Your Parking Costs Over Time'
+          }
+        },
+        responsive: true
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
