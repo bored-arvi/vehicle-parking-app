@@ -239,10 +239,25 @@ function renderResults(lots) {
       </div>
       <p>Pincode: ${lot.pin_code}</p>
       <p>Price: ₹${lot.price} per hour</p>
-      <div class="d-flex flex-wrap gap-2" id="spots-${lot.lot_id}">Loading spots...</div>
+      <div class="d-flex flex-wrap gap-2" id="spots-${lot.lot_id}"></div>
     `;
+    const spotContainer = card.querySelector(`#spots-${lot.lot_id}`);
+    lot.spots.forEach(s => {
+    const spot = document.createElement('div');
+    spot.className = 'spot-card';
+    spot.style.backgroundColor = s.status === 'O' ? '#f8d7da' : '#d4edda';
+    spot.textContent = s.id;
+    spot.onclick = () => showSpotModal(s);
+    spotContainer.appendChild(spot);
+    });
+    const addBtn = document.createElement('div');
+    addBtn.className = 'spot-card text-success border-success';
+    addBtn.style.borderStyle = 'dashed';
+    addBtn.textContent = '+ Add Spot';
+    addBtn.onclick = () => openAddSpotModal(lot.lot_id);
+    spotContainer.appendChild(addBtn);
+
     container.appendChild(card);
-    loadSpots(lot.lot_id);
   });
 }
 
