@@ -122,12 +122,19 @@ def api_get_parking_lots():
 def api_delete_parking_lot(lot_id):
     conn = get_db()
     cursor = conn.cursor()
+
+    # Delete spots of the lot first
+    cursor.execute('DELETE FROM parking_spots WHERE lot_id = ?', (lot_id,))
+
+    # Then delete the lot
     cursor.execute('DELETE FROM parking_lots WHERE id = ?', (lot_id,))
+    
     conn.commit()
     conn.close()
 
     socketio.emit('spot_updated')  # 🔁 Notify clients
-    return jsonify({'message': f'Parking lot {lot_id} deleted'}), 200
+    return jsonify({'message': f'Parking lot {lot_id} and its spots deleted'}), 200
+
 
 @parking_spot_bp.route('/api/lot/update', methods=['PUT'])
 def update_parking_lot():
