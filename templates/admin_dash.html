@@ -8,22 +8,6 @@
         body {
             display: flex;
         }
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            background: #343a40;
-            color: white;
-            position: fixed;
-        }
-        .sidebar a {
-            display: block;
-            padding: 15px;
-            color: white;
-            text-decoration: none;
-        }
-        .sidebar a:hover {
-            background: #495057;
-        }
         .main {
             margin-left: 250px;
             padding: 20px;
@@ -54,7 +38,24 @@
     </style>
 </head>
 <body>
-
+<nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3" style ="width:auto;">
+  <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar">
+    ☰ 
+  </button>
+</nav>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Admin Panel</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <a href="/dashboard/admin" class="d-block py-2 text-dark">Dashboard</a>
+    <a href="/dashboard/admin/users" class="d-block py-2 text-dark">Users</a>
+    <a href="/dashboard/admin/search" class="d-block py-2 text-dark">Search</a>
+    <a href="/dashboard/admin/charts" class="d-block py-2 text-dark">Charts</a>
+    <a href="/logout" class="d-block py-2 text-dark">Logout</a>
+  </div>
+</div>
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 <script>
   const socket = io();
@@ -62,17 +63,6 @@
     fetchParkingLots();
   });
 </script>
-
-
-<!-- Sidebar -->
-<div class="sidebar">
-    <h4 class="text-center py-4"><i class="bi bi-car-front"></i> Parking Admin</h4>
-    <a href="/admin/dashboard/users">Users</a>
-    <a href="/admin/dashboard/search">Search</a>
-    <a href="#">Spots</a>
-    <a href="#">Reservations</a>
-    <a href="/logout">Logout</a>
-</div>
 
 <!-- Main Content -->
 <div class="main">
@@ -406,5 +396,6 @@ async function deleteSpot() {
 
 window.onload = fetchParkingLots;
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

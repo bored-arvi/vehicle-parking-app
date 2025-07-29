@@ -1,123 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>User Dashboard - Parking</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .spot-card {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            min-width: 80px;
-            text-align: center;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>User Dashboard - Parking</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .spot-card {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      min-width: 80px;
+      text-align: center;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body class="bg-light">
 
 <!-- Hidden user info -->
 <div id="user-info" data-user="{{ session['user_id'] }}"></div>
 
-<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-<script>
-  const socket = io();
-  socket.on('spot_updated', () => {
-    fetchLots();
-    fetchUserReservations?.();
-  });
-</script>
-
-
 <!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark p-3">
-    <div class="container-fluid">
-        <span class="navbar-brand">User Dashboard</span>
-        <a href="/logout" class="btn btn-outline-light">Logout</a>
-        <a href="/user/charts" class="btn btn-outline-light">Charts</a>
-    </div>
+<nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3" style="width:auto;">
+  <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar">
+    ☰ 
+  </button>
 </nav>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">User Panel</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <a href="/dashboard/user" class="d-block py-2 text-dark">Dashboard</a>
+    <a href="/dashboard/user/reservations" class="d-block py-2 text-dark">My Reservations</a>
+    <a href="/dashboard/user/charts" class="d-block py-2 text-dark">Summary</a>
+    <a href="/logout/user" class="d-block py-2 text-dark">Logout</a>
+  </div>
+</div>
 
 <!-- Content -->
 <div class="container my-4">
-    <h2 class="mb-4">Available Parking Lots</h2>
-    <div id="lots-container"></div>
-
-    <hr class="my-5">
-
-    <h3>Your Reservations</h3>
-    <div id="user-reservations" class="mt-3"></div>
+  <h2 class="mb-4">Available Parking Lots</h2>
+  <div id="lots-container"></div>
 </div>
 
 <!-- Reserve Modal -->
 <div class="modal fade" id="reserveModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Confirm Reservation</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="reserve-form">
+      <form id="reserve-form">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Reservation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
           <input type="hidden" id="reserve-spot-id">
           <div class="mb-3">
             <label for="vehicle-number" class="form-label">Vehicle Number</label>
             <input type="text" class="form-control" id="vehicle-number" required>
           </div>
           <p>Are you sure you want to reserve this spot?</p>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="submit" form="reserve-form" class="btn btn-success">Reserve</button>
-      </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Reserve</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
-<!-- Release Modal -->
-<div class="modal fade" id="releaseModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Reservation Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="release-form">
-          <input type="hidden" id="release-reservation-id">
-          <div class="mb-2">
-            <label class="form-label">Spot ID</label>
-            <input type="text" class="form-control" id="release-spot-id" disabled>
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Vehicle Number</label>
-            <input type="text" class="form-control" id="release-vehicle-number" disabled>
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Start Time</label>
-            <input type="text" class="form-control" id="release-start-time" disabled>
-          </div>
-          <div class="mb-2">
-            <label class="form-label">End Time</label>
-            <input type="text" class="form-control" id="release-end-time" disabled>
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Total Cost</label>
-            <input type="text" class="form-control" id="release-total-cost" disabled>
-          </div>
-          <p>Are you sure you want to release this reservation?</p>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="submit" form="release-form" class="btn btn-danger">Release</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+<!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const userId = document.getElementById("user-info").dataset.user;
@@ -132,197 +86,65 @@ document.getElementById('reserve-form').addEventListener('submit', async (e) => 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ user_id: userId, spot_id: spotId, vehicle_number: vehicleNumber })
   });
-  const res1= await fetch ('/api/spot/reserve/' + spotId, {
+
+  const res1 = await fetch(`/api/spot/reserve/${spotId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId })
+    headers: { 'Content-Type': 'application/json' }
   });
 
-  if (res.ok) {
+  if (res.ok && res1.ok) {
     bootstrap.Modal.getInstance(document.getElementById('reserveModal')).hide();
     await fetchLots();
-    await fetchUserReservations();
   } else {
     alert('Reservation failed');
   }
 });
 
-document.getElementById('release-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-    const reservationId = document.getElementById('release-reservation-id').value;
-    const leaving_timestamp = document.getElementById('release-end-time').value;
-    const total_cost = document.getElementById('release-total-cost').value;
-    const spotId = document.getElementById('release-spot-id').value;
-
-    const res = await fetch(`/api/reservations/release/${reservationId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        leaving_timestamp: leaving_timestamp,
-        total_cost: total_cost
-    })
-});
-
-  if (res.ok) {
-    const data = await res.json();
-    alert(`Spot released. Total cost: ₹${data.cost}`);
-    const res1= await fetch(`/api/spot/release/${spotId}`,{method: 'POST'})
-    bootstrap.Modal.getInstance(document.getElementById('releaseModal')).hide();
-    await fetchLots();
-    await fetchUserReservations();
-  } else {
-    alert('Release failed');
-  }
-});
-
-let currentSpotAction = null;
-let lotPrices={};
-
 async function fetchLots() {
-    const res = await fetch('/api/lots');
-    const lots = await res.json();
-    const container = document.getElementById('lots-container');
-    container.innerHTML = '';
-    lots.forEach(lot => {
-        lotPrices[lot.id] = lot.price; // Store lot prices for later use
-    });
-    for (const lot of lots) {
-        const card = document.createElement('div');
-        card.className = 'card p-3 mb-4 shadow-sm';
-
-        card.innerHTML = `
-            <h5>${lot.prime_location_name}</h5>
-            <p>Price: ₹${lot.price}</p>
-            <p>Pincode: ${lot.pin_code}</p>
-            <div class="d-flex flex-wrap gap-2" id="spots-${lot.id}">Loading spots...</div>
-        `;
-
-        container.appendChild(card);
-        renderSpots(lot.id);
-    }
+  const res = await fetch('/api/lots');
+  const lots = await res.json();
+  const container = document.getElementById('lots-container');
+  container.innerHTML = '';
+  lots.forEach(lot => {
+    const card = document.createElement('div');
+    card.className = 'card p-3 mb-4 shadow-sm';
+    card.innerHTML = `
+      <h5>${lot.prime_location_name}</h5>
+      <p>Price: ₹${lot.price}</p>
+      <p>Pincode: ${lot.pin_code}</p>
+      <div class="d-flex flex-wrap gap-2" id="spots-${lot.id}">Loading spots...</div>
+    `;
+    container.appendChild(card);
+    renderSpots(lot.id);
+  });
 }
 
 async function renderSpots(lotId) {
-    const container = document.getElementById(`spots-${lotId}`);
-    const res = await fetch(`/api/spot/status/${lotId}`);
-    const spots = await res.json();
-
-    container.innerHTML = '';
-    for (const s of spots) {
-        const div = document.createElement('div');
-        div.className = 'spot-card';
-        div.style.backgroundColor = s.status === 'O' ? '#f8d7da' : '#d4edda';
-        div.textContent = s.id;
-
-        if (s.status === 'A') {
-            div.onclick = () => promptReservation(s.id);
-        } else if (s.status === 'O') {
-            div.onclick = () => promptRelease(s.id);
-        } else {
-            div.onclick = () => alert('This spot is not available for reservation.');
-        }
-        container.appendChild(div);
+  const container = document.getElementById(`spots-${lotId}`);
+  const res = await fetch(`/api/spot/status/${lotId}`);
+  const spots = await res.json();
+  container.innerHTML = '';
+  spots.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'spot-card';
+    div.style.backgroundColor = s.status === 'O' ? '#f8d7da' : '#d4edda';
+    div.textContent = s.id;
+    if (s.status === 'A') {
+      div.onclick = () => promptReservation(s.id);
+    } else {
+      div.onclick = () => alert('Spot is occupied.');
     }
+    container.appendChild(div);
+  });
 }
 
 function promptReservation(spotId) {
-    currentSpotAction = { type: 'reserve', spotId };
-    document.getElementById('reserve-spot-id').value = spotId;
-    new bootstrap.Modal(document.getElementById('reserveModal')).show();
+  document.getElementById('reserve-spot-id').value = spotId;
+  new bootstrap.Modal(document.getElementById('reserveModal')).show();
 }
-
-async function promptRelease(spotId) {
-    currentSpotAction = { type: 'release', spotId };
-    const res = await fetch(`/api/reservation/${spotId}/${userId}`);
-    const reservation = await res.json();
-    document.getElementById('release-reservation-id').value = reservation.id;
-    document.getElementById('release-spot-id').value = reservation.spot_id;
-    document.getElementById('release-vehicle-number').value = reservation.vehicle_no;
-    document.getElementById('release-start-time').value = reservation.parking_timestamp;
-    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
-    document.getElementById('release-end-time').value = now;
-    const cost = await fetch(`/api/reservations/cost`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            start_time: reservation.parking_timestamp,
-            end_time: now,
-            price_per_hour: reservation.price_per_hour
-        })
-    });
-    const costData = await cost.json();
-    console.log(costData);
-    document.getElementById('release-total-cost').value = costData['cost'];
-    document.getElementById('release-spot-id').disabled = true;
-    document.getElementById('release-vehicle-number').disabled = true;
-    document.getElementById('release-start-time').disabled = true;
-    document.getElementById('release-reservation-id').disabled = true;
-    document.getElementById('release-end-time').disabled = true;
-    document.getElementById('release-total-cost').disabled = true;
-    new bootstrap.Modal(document.getElementById('releaseModal')).show();
-}
-
-async function performSpotAction() {
-    if (!currentSpotAction) return;
-    const { type, spotId } = currentSpotAction;
-    const res = await fetch(`/api/spot/${type}/${spotId}`, { method: 'POST' });
-    if (res.ok) {
-        fetchLots();
-        fetchUserReservations();
-        bootstrap.Modal.getInstance(document.getElementById('spotActionModal')).hide();
-    } else {
-        alert('Failed to perform action.');
-    }
-}
-
-document.getElementById('confirm-action-btn')?.addEventListener('click', performSpotAction);
-
-async function fetchUserReservations() {
-    const res = await fetch('/api/reservations/user/' + userId, { method: 'GET' });
-    const data = await res.json();
-    const container = document.getElementById('user-reservations');
-
-    if (data.length === 0) {
-        container.innerHTML = '<p>No active reservations.</p>';
-        return;
-    }
-
-    let table = `
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Vehicle No</th>
-                    <th>Start Time</th>
-                    <th>End / Action</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    data.forEach(r => {
-        table += `
-            <tr>
-                <td>${r.id}</td>
-                <td>${r.vehicle_no}</td>
-                <td>${r.parking_timestamp}</td>
-                <td>
-                    ${r.leaving_timestamp 
-                        ? r.leaving_timestamp 
-                        : `<button class="btn btn-danger btn-sm" onclick="promptRelease(${r.spot_id})">Release</button>`}
-                </td>
-            </tr>
-        `;
-    });
-
-    table += '</tbody></table>';
-    container.innerHTML = table;
-}
-
 
 window.onload = () => {
-    fetchLots();
-    fetchUserReservations();
+  fetchLots();
 };
 </script>
 </body>

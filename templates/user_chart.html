@@ -4,49 +4,120 @@
   <meta charset="UTF-8">
   <title>User Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    .chart-container {
-      width: 90%;
-      max-width: 800px;
-      margin: 30px auto;
+    body {
+      padding-top: 70px;
+      background-color: #f8f9fa;
     }
-    h2 { text-align: center; }
+    .chart-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .switcher {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    .switcher button {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      background-color: #e2e6ea;
+      color: #333;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    .switcher button.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+    .chart-section {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+    .chart-section.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    canvas {
+      max-height: 420px;
+    }
   </style>
 </head>
 <body>
 
-<h2>Welcome, {{ session['username'] }}</h2>
-<div id="user-info" data-userid="{{ session['user_id'] }}"></div>
-<div id="user-info" data-username="{{session['username']}}"></div>
-<!-- Chart Containers -->
-<div class="chart-container">
-  <canvas id="userMonthlyUsageChart"></canvas>
+<!-- Navbar -->
+<nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3 w-100 shadow-sm">
+  <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar">☰</button>
+</nav>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">User Panel</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <a href="/dashboard/user" class="d-block py-2 text-dark">Dashboard</a>
+    <a href="/dashboard/user/reservations" class="d-block py-2 text-dark">My Reservations</a>
+    <a href="/dashboard/user/charts" class="d-block py-2 text-dark">Summary</a>
+    <a href="/logout/user" class="d-block py-2 text-dark">Logout</a>
+  </div>
 </div>
 
-<div class="chart-container">
-  <canvas id="userTotalSpentChart"></canvas>
+<!-- User ID -->
+<div id="user-info" data-userid="{{ session['user_id'] }}"></div>
+
+<!-- Chart Switcher -->
+<div class="chart-wrapper">
+  <div class="switcher">
+    <button class="active" onclick="switchChart(0)">Spent ₹</button>
+    <button onclick="switchChart(1)">Frequent Lots</button>
+    <button onclick="switchChart(2)">Cost Trend</button>
+  </div>
+
+  <div class="chart-section active">
+    <canvas id="userMonthlyUsageChart"></canvas>
+  </div>
+  <div class="chart-section">
+    <canvas id="frequentLotsChart"></canvas>
+  </div>
+  <div class="chart-section">
+    <canvas id="costLineChart"></canvas>
+  </div>
 </div>
-<div class="chart-container mt-4">
-  <canvas id="frequentLotsChart"></canvas>
-</div>
-<div class="chart-container mt-4">
-  <canvas id="costLineChart"></canvas>
-</div>
+
+<!-- Chart Rendering -->
 <script>
 const userId = document.getElementById('user-info').dataset.userid;
-const username=document.getElementById('user-info').dataset.username;
 
-// Chart 1: User Monthly Usage
+// Switch charts
+function switchChart(index) {
+  const buttons = document.querySelectorAll('.switcher button');
+  const sections = document.querySelectorAll('.chart-section');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  sections.forEach(s => s.classList.remove('active'));
+  buttons[index].classList.add('active');
+  sections[index].classList.add('active');
+}
+
+// Spent Chart
+// Chart 1: Monthly Usage
 fetch(`/api/chart/user-usage/${userId}`)
   .then(res => res.json())
   .then(data => {
     const labels = data.map(d => d.month);
     const counts = data.map(d => d.count);
+    const maxCount = Math.max(...counts, 0);
 
     new Chart(document.getElementById('userMonthlyUsageChart'), {
       type: 'bar',
       data: {
-        labels: labels,
+        labels,
         datasets: [{
           label: 'Reservations per Month',
           data: counts,
@@ -54,37 +125,35 @@ fetch(`/api/chart/user-usage/${userId}`)
         }]
       },
       options: {
-        plugins: { title: { display: true, text: 'Monthly Reservation Usage' } },
-        responsive: true
+        responsive: true,
+        plugins: {
+          title: { display: true, text: 'Monthly Reservation Usage' }
+        },
+        elements:{
+            bar:{
+                borderRadius: 4,
+                barThickness: 30,
+                maxBarThickness: 40
+            }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            min: 0,
+            max: Math.ceil(maxCount * 1.2)
+          }
+        }
       }
     });
   });
 
-// Chart 2: User Total Spent
-fetch(`/api/chart/user-total/${userId}`)
-  .then(res => res.json())
-  .then(data => {
-    new Chart(document.getElementById('userTotalSpentChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Total ₹ Spent'],
-        datasets: [{
-          data: [data.total_spent],
-          backgroundColor: ['#facc15']
-        }]
-      },
-      options: {
-        plugins: { title: { display: true, text: 'Total Amount Spent' } },
-        responsive: true
-      }
-    });
-  });
-
+// Chart 2: Frequent Lots
 fetch(`/api/chart/user-frequent-lots/${userId}`)
   .then(res => res.json())
   .then(data => {
     const labels = data.map(d => d.lot);
     const counts = data.map(d => d.count);
+    const maxCount = Math.max(...counts, 0);
 
     new Chart(document.getElementById('frequentLotsChart'), {
       type: 'bar',
@@ -97,21 +166,37 @@ fetch(`/api/chart/user-frequent-lots/${userId}`)
         }]
       },
       options: {
-        indexAxis: 'y',  // Horizontal bar
+        responsive: true,
+        indexAxis: 'y',
         plugins: {
           title: { display: true, text: 'Most Frequently Used Parking Lots' },
           legend: { display: false }
         },
-        responsive: true
+        elements:{
+            bar:{
+                borderRadius: 4,
+                barThickness: 30,
+                maxBarThickness: 4
+            }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            min: 0,
+            max: Math.ceil(maxCount * 1.2)
+          }
+        }
       }
     });
   });
 
+// Chart 3: Line chart for cost over time
 fetch(`/api/chart/user-cost-line/${userId}`)
   .then(res => res.json())
   .then(data => {
     const labels = data.map(d => d.date);
     const costs = data.map(d => d.cost);
+    const maxCost = Math.max(...costs, 0);
 
     new Chart(document.getElementById('costLineChart'), {
       type: 'line',
@@ -126,17 +211,26 @@ fetch(`/api/chart/user-cost-line/${userId}`)
         }]
       },
       options: {
+        responsive: true,
         plugins: {
           title: {
             display: true,
             text: 'Your Parking Costs Over Time'
           }
         },
-        responsive: true
+        scales: {
+          y: {
+            beginAtZero: true,
+            min: 0,
+            max: Math.ceil(maxCost * 1.2)
+          }
+        }
       }
     });
   });
+
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

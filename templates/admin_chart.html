@@ -14,6 +14,24 @@
 <body>
 
 <h2>Admin Chart Dashboard</h2>
+<nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3" style ="width:auto;">
+  <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar">
+    ☰ 
+  </button>
+</nav>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Admin Panel</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <a href="/dashboard/admin" class="d-block py-2 text-dark">Dashboard</a>
+    <a href="/dashboard/admin/users" class="d-block py-2 text-dark">Users</a>
+    <a href="/dashboard/admin/search" class="d-block py-2 text-dark">Search</a>
+    <a href="/dashboard/admin/charts" class="d-block py-2 text-dark">Charts</a>
+    <a href="/logout" class="d-block py-2 text-dark">Logout</a>
+  </div>
+</div>
 
 <!-- Lot Dropdown -->
 <div class="chart-container">
