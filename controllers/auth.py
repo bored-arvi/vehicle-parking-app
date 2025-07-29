@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, session
+from flask import Blueprint, render_template, request, redirect, session, url_for
 import sqlite3
 from models.user import check_user_exists
 from models.admin import check_admin_exists
@@ -20,7 +20,7 @@ def admin_login():
             if check[1] == password:
                 session['role'] = 'admin'
                 session['username'] = username
-                return redirect('/admin/dashboard')
+                return redirect('/dashboard/admin')
             else:
                 return "Invalid password", 401
     return render_template("admin.html")
@@ -38,7 +38,7 @@ def user_login():
             session['role'] = 'user'
             session['username'] = username
             session['user_id'] = check_user_exists(cursor, username)[0]
-            return redirect('/user/dashboard')
+            return redirect(url_for('dashboard_bp.user_dashboard'))
         else:
             return "Invalid credentials", 401
     return render_template("user.html")

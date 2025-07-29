@@ -5,56 +5,57 @@
     <title>Admin Dashboard - Parking Lots</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            display: flex;
-        }
-        .main {
-            margin-left: 250px;
-            padding: 20px;
-            width: 100%;
-        }
-        .lot-card {
-            margin-bottom: 20px;
-        }
-        .dropdown-toggle::after {
-            margin-left: 8px;
-        }
-        .spot-card {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            min-width: 80px;
-            text-align: center;
-        }
-        .spot-card {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            min-width: 80px;
-            text-align: center;
-            cursor: pointer;
-        }
+      body {
+          display: flex;
+      }
+      .main {
+          margin-left: 250px;
+          padding: 20px;
+          width: 100%;
+      }
+      .lot-card {
+          margin-bottom: 20px;
+      }
+      .spot-card {
+          padding: 8px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          min-width: 80px;
+          text-align: center;
+          cursor: pointer;
+      }
 
     </style>
 </head>
 <body>
-<nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3" style ="width:auto;">
+<nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3" style="width:auto;">
   <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar">
     ☰ 
   </button>
 </nav>
+
 <div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title">Admin Panel</h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
   </div>
   <div class="offcanvas-body">
-    <a href="/dashboard/admin" class="d-block py-2 text-dark">Dashboard</a>
-    <a href="/dashboard/admin/users" class="d-block py-2 text-dark">Users</a>
-    <a href="/dashboard/admin/search" class="d-block py-2 text-dark">Search</a>
-    <a href="/dashboard/admin/charts" class="d-block py-2 text-dark">Charts</a>
-    <a href="/logout" class="d-block py-2 text-dark">Logout</a>
+    <a href="{{ url_for('dashboard_bp.dashboard') }}" class="d-block py-2 text-dark">Dashboard</a>
+    <a href="{{ url_for('dashboard_bp.admin_users') }}" class="d-block py-2 text-dark">Users</a>
+    <a href="{{ url_for('dashboard_bp.search_lots') }}" class="d-block py-2 text-dark">Search</a>
+    <a href="{{ url_for('dashboard_bp.create_charts') }}" class="d-block py-2 text-dark">Charts</a>
+    <!-- Trigger modal directly -->
+    <button class="btn d-block py-2 text-danger w-100 text-start" 
+        data-bs-toggle="modal" 
+        data-bs-target="#logoutModal">
+      Logout
+    </button>
   </div>
+</div>
+
+<!-- Place modal outside the offcanvas -->
+{% include 'partials/logout_modal.html' %}
+
 </div>
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 <script>
@@ -174,7 +175,7 @@
   </div>
 </div>
 <!-- Bootstrap + JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 document.getElementById('editLotForm').addEventListener('submit', async (e) => {
     e.preventDefault();

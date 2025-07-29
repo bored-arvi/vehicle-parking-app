@@ -65,10 +65,14 @@
     <a href="/dashboard/user" class="d-block py-2 text-dark">Dashboard</a>
     <a href="/dashboard/user/reservations" class="d-block py-2 text-dark">My Reservations</a>
     <a href="/dashboard/user/charts" class="d-block py-2 text-dark">Summary</a>
-    <a href="/logout/user" class="d-block py-2 text-dark">Logout</a>
+    <button class="btn d-block py-2 text-danger w-100 text-start" 
+        data-bs-toggle="modal" 
+        data-bs-target="#logoutModal">
+      Logout
+    </button>
   </div>
 </div>
-
+{% include 'partials/logout_modal.html' %}
 <!-- User ID -->
 <div id="user-info" data-userid="{{ session['user_id'] }}"></div>
 

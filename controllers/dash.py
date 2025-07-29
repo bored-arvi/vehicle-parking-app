@@ -10,6 +10,7 @@ def dashboard():
         return render_template('admin_dash.html')
     else:
         return "Unauthorized", 403
+    
 @dashboard_bp.route('/user', methods=['GET','POST'])
 def user_dashboard():
     if 'role' in session and session['role'] == 'user':

@@ -58,25 +58,33 @@
 <body class="bg-light">
 
 <!-- Navbar -->
-<nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3" style ="width:auto;">
+<nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3" style="width:auto;">
   <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar">
     ☰ 
   </button>
 </nav>
+
 <div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title">Admin Panel</h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
   </div>
   <div class="offcanvas-body">
-    <a href="/dashboard/admin" class="d-block py-2 text-dark">Dashboard</a>
-    <a href="/dashboard/admin/users" class="d-block py-2 text-dark">Users</a>
-    <a href="/dashboard/admin/search" class="d-block py-2 text-dark">Search</a>
-    <a href="/dashboard/admin/charts" class="d-block py-2 text-dark">Charts</a>
-    <a href="/logout" class="d-block py-2 text-dark">Logout</a>
+    <a href="{{ url_for('dashboard_bp.dashboard') }}" class="d-block py-2 text-dark">Dashboard</a>
+    <a href="{{ url_for('dashboard_bp.admin_users') }}" class="d-block py-2 text-dark">Users</a>
+    <a href="{{ url_for('dashboard_bp.search_lots') }}" class="d-block py-2 text-dark">Search</a>
+    <a href="{{ url_for('dashboard_bp.create_charts') }}" class="d-block py-2 text-dark">Charts</a>
+    <!-- Trigger modal directly -->
+    <button class="btn d-block py-2 text-danger w-100 text-start" 
+        data-bs-toggle="modal" 
+        data-bs-target="#logoutModal">
+      Logout
+    </button>
   </div>
 </div>
 
+<!-- Place modal outside the offcanvas -->
+{% include 'partials/logout_modal.html' %}
 <div class="container mt-4">
   <h2>All Registered Users</h2>
   <div class="table-responsive mt-4">

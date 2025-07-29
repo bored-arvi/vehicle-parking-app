@@ -32,7 +32,16 @@ def api_add_reservation():
         with get_db() as conn:
             cursor = conn.cursor()
 
-            # Only adds reservation; assumes spot is reserved via /api/spot/reserve
+            # 🔍 Check if the user has an active reservation already
+            cursor.execute("""
+                SELECT * FROM reservations
+                WHERE user_id = ? AND is_active = 1
+            """, (user_id,))
+            existing = cursor.fetchone()
+            if existing:
+                return jsonify({'error': 'You already have an active reservation.'}), 409
+
+            # ✅ Add reservation
             add_reservation(cursor, spot_id, user_id, vehicle_no)
 
             conn.commit()
@@ -43,8 +52,7 @@ def api_add_reservation():
         return jsonify({'error': str(ve)}), 400
 
     except Exception as e:
-        return jsonify({'error': 'Internal server error'}), 500
-
+        return jsonify({'error': 'Internal server error'}),500
 
 @reservations_bp.route('/api/reservations/cost', methods=['POST'])
 def api_calculate_cost():  
@@ -74,18 +82,19 @@ def api_get_user_reservations(user_id):
 def api_release_reservation(reservation_id):
     with get_db() as conn:
         cursor = conn.cursor()
-        data=request.json
-        leaving_timestamp=data['leaving_timestamp']
-        parking_cost=data['total_cost']
+        data = request.json
+        leaving_timestamp = data.get('leaving_timestamp')
+        parking_cost = data.get('total_cost')
 
-        if not parking_cost or not leaving_timestamp:
-            return jsonify({'message': 'Reservation not found'}), 404
+        if leaving_timestamp is None or leaving_timestamp == "" or parking_cost is None:
+            return jsonify({'message': 'Invalid input'}), 400
 
         release_reservation(cursor, reservation_id, leaving_timestamp, parking_cost)
         conn.commit()
 
     socketio.emit('spot_updated')
     return jsonify({'message': 'Reservation released successfully', 'cost': parking_cost}), 200
+
 
 @reservations_bp.route('/api/reservations/timestamp/<int:reservation_id>', methods=['GET'])
 def api_get_parking_timestamp(reservation_id):

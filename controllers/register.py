@@ -22,7 +22,7 @@ def register():
                 VALUES (?, ?, ?, ?, ?)
             ''', (name, username, email, phone, password))
             conn.commit()
-            return redirect('/login')
+            return redirect('/auth/user')
         except sqlite3.IntegrityError:
             return "Username or Email already exists."
         finally:
