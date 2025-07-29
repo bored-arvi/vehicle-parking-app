@@ -52,6 +52,7 @@
 </head>
 <body>
 
+<!-- Sidebar -->
 <nav class="navbar bg-light p-2 position-fixed top-0 start-0 z-3 w-100 shadow-sm">
   <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar">☰</button>
 </nav>
@@ -70,6 +71,7 @@
 </div>
 {% include 'partials/logout_modal.html' %}
 
+<!-- Chart Area -->
 <div class="chart-wrapper">
   <div class="switcher">
     <button class="active" onclick="switchChart(0)">Overall Status</button>
@@ -79,7 +81,7 @@
     <button onclick="switchChart(4)">Top Lots</button>
   </div>
 
-  <div class="mb-4 text-center">
+  <div id="lotDropdown" class="mb-4 text-center" style="display: none;">
     <label for="lotSelect"><strong>Select Parking Lot:</strong></label>
     <select id="lotSelect" class="form-select w-auto d-inline-block"></select>
   </div>
@@ -98,13 +100,15 @@
   function switchChart(index) {
     const buttons = document.querySelectorAll('.switcher button');
     const sections = document.querySelectorAll('.chart-section');
+    const lotDropdown = document.getElementById('lotDropdown');
     buttons.forEach(btn => btn.classList.remove('active'));
     sections.forEach(s => s.classList.remove('active'));
     buttons[index].classList.add('active');
     sections[index].classList.add('active');
+    lotDropdown.style.display = (index === 2 || index === 3) ? 'block' : 'none';
   }
 
-  // Populate dropdown and load charts
+  // Dropdown + default lot charts
   fetch('/api/chart/admin/lot-names')
     .then(res => res.json())
     .then(lots => {
@@ -148,7 +152,13 @@
           type: 'line',
           data: {
             labels: data.map(d => d.date),
-            datasets: [{ label: 'Reservations', data: data.map(d => d.count), borderColor: '#60a5fa', fill: false }]
+            datasets: [{
+              label: 'Reservations',
+              data: data.map(d => d.count),
+              borderColor: '#60a5fa',
+              fill: false,
+              tension: 0.3
+            }]
           },
           options: {
             plugins: { title: { display: true, text: `Last 30 Days Activity in ${lot}` } },
@@ -158,6 +168,7 @@
       });
   }
 
+  // Static Charts
   fetch('/api/chart/admin/spot-status')
     .then(res => res.json())
     .then(data => {
@@ -177,15 +188,32 @@
   fetch('/api/chart/admin/monthly-revenue')
     .then(res => res.json())
     .then(data => {
+      const values = data.map(d => d.revenue);
+      const maxVal = Math.max(...values, 0);
+
       new Chart(document.getElementById('monthlyRevenueChart'), {
-        type: 'line',
+        type: 'bar',
         data: {
           labels: data.map(d => d.month),
-          datasets: [{ label: 'Revenue (₹)', data: data.map(d => d.revenue), borderColor: '#fbbf24', fill: false }]
+          datasets: [{
+            label: 'Revenue (₹)',
+            data: values,
+            backgroundColor: '#fbbf24'
+          }]
         },
         options: {
+          maintainAspectRatio: false,
           plugins: { title: { display: true, text: 'Monthly Revenue' } },
-          responsive: true
+          responsive: true,
+          elements: {
+            bar: { borderRadius: 4, barThickness: 30, maxBarThickness: 40 }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: Math.ceil(maxVal * 1.2)
+            }
+          }
         }
       });
     });
@@ -193,15 +221,32 @@
   fetch('/api/chart/admin/top-lots')
     .then(res => res.json())
     .then(data => {
+      const values = data.map(d => d.count);
+      const maxVal = Math.max(...values, 0);
+
       new Chart(document.getElementById('topLotsChart'), {
         type: 'bar',
         data: {
           labels: data.map(d => d.lot),
-          datasets: [{ label: 'Reservations', data: data.map(d => d.count), backgroundColor: '#c084fc' }]
+          datasets: [{
+            label: 'Reservations',
+            data: values,
+            backgroundColor: '#c084fc'
+          }]
         },
         options: {
+          maintainAspectRatio: false,
           plugins: { title: { display: true, text: 'Top Lots by Reservations' } },
-          responsive: true
+          responsive: true,
+          elements: {
+            bar: { borderRadius: 4, barThickness: 30, maxBarThickness: 40 }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: Math.ceil(maxVal * 1.2)
+            }
+          }
         }
       });
     });
