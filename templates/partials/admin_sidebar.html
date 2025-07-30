@@ -1,0 +1,24 @@
+<div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title fw-bold">Admin Panel</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <a href="{{ url_for('dashboard_bp.dashboard') }}">
+      <span class="material-icons">home</span> Dashboard
+    </a>
+    <a href="{{ url_for('dashboard_bp.admin_users') }}">
+      <span class="material-icons">group</span> Users
+    </a>
+    <a href="{{ url_for('dashboard_bp.search_lots') }}">
+      <span class="material-icons">search</span> Search
+    </a>
+    <div class="sidebar-separator"></div>
+    <a href="{{ url_for('dashboard_bp.create_charts') }}">
+      <span class="material-icons">bar_chart</span> Charts
+    </a>
+    <button class="btn text-danger text-start w-100" data-bs-toggle="modal" data-bs-target="#logoutModal">
+      <span class="material-icons">logout</span> Logout
+    </button>
+  </div>
+</div>
