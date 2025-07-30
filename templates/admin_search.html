@@ -230,6 +230,7 @@ async function performSearch() {
   try {
     const res = await fetch(url.toString());
     const data = await res.json();
+    bootstrap.Offcanvas.getInstance(document.getElementById('filterPanel')).hide();
     renderResults(data);
   } catch (err) {
     console.error('Search failed:', err);
