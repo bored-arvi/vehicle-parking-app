@@ -119,11 +119,18 @@
       </div>
       <div class="modal-body">
         <input type="hidden" id="edit-id">
+        <input type="hidden" id="current-max-spots">
+        <label>Lot Name</label>
         <input type="text" id="edit-name" class="form-control mb-2" placeholder="Lot Name" required>
+        <label>Price per Hour</label>
         <input type="number" id="edit-price" class="form-control mb-2" placeholder="Price (₹ per hour)" required>
+        <label>Address</label>
         <input type="text" id="edit-address" class="form-control mb-2" placeholder="Address">
+        <label>Pincode</label>
         <input type="text" id="edit-pincode" class="form-control mb-2" placeholder="Pincode">
+        <label>Max Spots</label>
         <input type="number" id="edit-max-spots" class="form-control mb-2" placeholder="Max Spots" required>
+        <small id="maxSpotError" class="text-danger d-none">New value cannot be less than existing max spots.</small>
       </div>
       <div class="modal-footer">
         <button type="submit" class="btn btn-success">Save Changes</button>
@@ -303,14 +310,26 @@ async function loadSpots(lotId) {
 
 document.getElementById('editLotForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const oldMaxSpots = parseInt(document.getElementById('current-max-spots').value);
+    const newMaxSpots = parseInt(document.getElementById('edit-max-spots').value);
+    const errorMsg = document.getElementById('maxSpotError');
+
+    if (newMaxSpots < oldMaxSpots) {
+        errorMsg.classList.remove('d-none');
+        return; // stop submission
+    } else {
+        errorMsg.classList.add('d-none');
+    }
+
     const data = { 
         id: parseInt(document.getElementById('edit-id').value),
         name: document.getElementById('edit-name').value,
         price: parseFloat(document.getElementById('edit-price').value),
         address: document.getElementById('edit-address').value,
         pincode: document.getElementById('edit-pincode').value,
-        max_spots: parseInt(document.getElementById('edit-max-spots').value)
-    }; 
+        max_spots: newMaxSpots
+    };
 
     const res = await fetch('/api/lot/update', {
         method: 'PUT',
@@ -319,22 +338,13 @@ document.getElementById('editLotForm').addEventListener('submit', async (e) => {
     });
 
     if (res.ok) {
-    bootstrap.Modal.getInstance(document.getElementById('editLotModal')).hide();
-
-    const updatedLot = await res.json(); // Make your API return the updated lot data
-
-    // Update the card in-place
-    const card = document.querySelector(`[data-lot-id="${updatedLot.id}"]`);
-    if (card) {
-        card.querySelector('h5').textContent = updatedLot.prime_location_name;
-        card.querySelector('p:nth-of-type(1)').textContent = `Pincode: ${updatedLot.pin_code}`;
-        card.querySelector('p:nth-of-type(2)').textContent = `Price: ₹${updatedLot.price} per hour`;
-    }
-    }
-    else {
+        bootstrap.Modal.getInstance(document.getElementById('editLotModal')).hide();
+        fetchParkingLots();
+    } else {
         alert("Failed to update lot.");
     }
 });
+
 
 document.getElementById('addLotForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -384,12 +394,14 @@ document.getElementById('addSpotForm').addEventListener('submit', async (e) => {
 });
 
 function openEditModal(lot) {
+    console.log('Editing lot:', lot);
     document.getElementById('edit-id').value = lot.id;
     document.getElementById('edit-name').value = lot.prime_location_name;
     document.getElementById('edit-price').value = lot.price;
     document.getElementById('edit-address').value = lot.address || '';
     document.getElementById('edit-pincode').value = lot.pin_code || '';
     document.getElementById('edit-max-spots').value = lot.max_spots;
+    document.getElementById("current-max-spots").value = lot.max_spots;
     new bootstrap.Modal(document.getElementById('editLotModal')).show();
 }
 function deleteLot(id) {

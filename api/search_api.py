@@ -20,7 +20,7 @@ def search_lots_with_spots():
     
 
     base_query = '''
-        SELECT pl.id as lot_id, pl.prime_location_name, pl.pin_code, pl.price
+        SELECT pl.id as lot_id, pl.prime_location_name, pl.pin_code, pl.price, pl.max_spots, pl.address
         FROM parking_lots pl
         WHERE 1=1
     '''
@@ -41,9 +41,9 @@ def search_lots_with_spots():
         results = []
         for lot in lots:
             cursor.execute('''
-                SELECT id, lot_id, status
-                FROM parking_spots
-                WHERE lot_id = ?
+                SELECT p.id, p.lot_id, p.status,l.max_spots,l.address
+                FROM parking_spots p, parking_lots l
+                WHERE p.lot_id = l.id AND p.lot_id = ?
             ''', (lot['lot_id'],))
             spots = cursor.fetchall()
 
@@ -63,7 +63,8 @@ def search_lots_with_spots():
             lot_data['occupied_count'] = sum(1 for s in spots if s['status'] == 'O')
             lot_data['available_count'] = sum(1 for s in spots if s['status'] == 'A')
             lot_data['total_spots'] = len(spots)
-
+            lot_data['address'] = lot_data['address'] if 'address' in lot_data else ''
+            lot_data['max_spots'] = lot_data['max_spots'] if 'max_spots' in lot_data else ''
             results.append(lot_data)
 
     return jsonify(results), 200
