@@ -4,19 +4,118 @@
   <meta charset="UTF-8">
   <title>Register</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #f9f0e6;
+      color: #2c1f1f;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .auth-card {
+      background: linear-gradient(145deg, #fffaf5, #f0e0d6);
+      color: #2c1f1f;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: 1px solid #e3d0c0;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 30px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .auth-card:hover {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .btn-primary {
+      background: #d2bda9;
+      border: none;
+      color: #2c1f1f;
+      transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background: #c2a890;
+    }
+
+    .was-validated .form-control:invalid {
+      border-color: #dc3545;
+    }
+
+    .was-validated .form-control:valid {
+      border-color: #28a745;
+    }
+  </style>
 </head>
-<body class="bg-light">
+<body>
   <div class="container mt-5">
-    <h3>User Registration</h3>
-    <form method="POST" action="/register" class="mt-4">
-      <div class="mb-3"><input type="text" class="form-control" name="name" placeholder="Full Name" required></div>
-      <div class="mb-3"><input type="text" class="form-control" name="username" placeholder="Username" required></div>
-      <div class="mb-3"><input type="email" class="form-control" name="email" placeholder="Email" required></div>
-      <div class="mb-3"><input type="text" class="form-control" name="phone" placeholder="Phone"></div>
-      <div class="mb-3"><input type="password" class="form-control" name="password" placeholder="Password" required></div>
-      <button type="submit" class="btn btn-primary">Register</button>
-    </form>
-    <a href="/login" class="d-block mt-3">Already registered? Login</a>
+    <div class="auth-card">
+      <h3 class="text-center mb-4">User Registration</h3>
+      <form method="POST" action="/register" class="needs-validation" novalidate>
+
+        <!-- Full Name -->
+        <div class="mb-3">
+          <label for="name" class="form-label">Full Name</label>
+          <input type="text" class="form-control" name="name" id="name" placeholder="Full Name (e.g., Michael Madhana Kamarajan)"
+            pattern="^[A-Za-z]+\s[A-Za-z]+.*$" required>
+          <div class="invalid-feedback">Please enter your full name with at least a space (e.g., Michael Madhana Kamarajan).</div>
+        </div>
+
+        <!-- Username -->
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" class="form-control" name="username" id="username" placeholder="Username" required>
+          <div class="invalid-feedback">Username is required.</div>
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" name="email" id="email" placeholder="Email"
+            pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$" required>
+          <div class="invalid-feedback">Enter a valid email (must include '@' and '.').</div>
+        </div>
+
+        <!-- Phone -->
+        <div class="mb-3">
+          <label for="phone" class="form-label">Phone</label>
+          <input type="text" class="form-control" name="phone" id="phone" placeholder="Phone" pattern="^[0-9]{10}$" required>
+          <div class="invalid-feedback">Enter a valid 10-digit phone number.</div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" name="password" id="password" placeholder="Password"
+            pattern="^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$" required>
+          <div class="invalid-feedback">
+            Password must be at least 8 characters long, with at least one capital letter and one number.
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Register</button>
+      </form>
+
+      <a href="/login" class="d-block mt-3 text-center">Already registered? Login</a>
+    </div>
   </div>
+
+  <script>
+    (function () {
+      'use strict';
+      const forms = document.querySelectorAll('.needs-validation');
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -439,7 +439,7 @@ async function fetchParkingLots() {
         `;
 
         container.appendChild(card);
-        renderSpots(lot.id);
+        renderSpots(lot.id,lot.max_spots);
     });
 }
 
@@ -452,7 +452,7 @@ function openAddSpotModal(lotId) {
 }
 
 
-async function renderSpots(lotId) {
+async function renderSpots(lotId,max_spots) {
     const container = document.getElementById(`spots-${lotId}`);
     const res = await fetch(`/api/spot/status/${lotId}`);
     if (!res.ok) {
@@ -475,19 +475,23 @@ async function renderSpots(lotId) {
         spot.onclick = () => showSpotModal(s);
         container.appendChild(spot);
     });
-    res=await fetch('/api/spots/total',{
+    const res1=await fetch('/api/spots/total',{
       method:'POST',
       headers: {'Content-Type': 'application/json'},
-
+      body: JSON.stringify({ lot_id: lotId })
     })
+    const Countspots = await res1.json();
+    totalSpots = Countspots[0]['spot_count'];
+    console.log(totalSpots, max_spots,Countspots);
+    if (totalSpots<max_spots){
     const addBtn = document.createElement('div');
     addBtn.className = 'spot-card text-success border-success';
     addBtn.style.borderStyle = 'dashed';
     addBtn.innerHTML = '+ Add Spot';
     addBtn.onclick = () => openAddSpotModal(lotId);
     container.appendChild(addBtn);
+  }
 }
-
 
 
 async function deleteLot(id) {

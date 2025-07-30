@@ -55,6 +55,6 @@ def get_multiple_parking_status(cursor,lot_id):
 
 def get_total_spots(cursor, lot_id):
     cursor.execute('''
-        SELECT COUNT(*) FROM parking_spots WHERE lot_id = ?
+        SELECT count(*) FROM parking_spots WHERE lot_id = ?
     ''', (lot_id,))
     return cursor.fetchone()[0]
