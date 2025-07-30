@@ -180,3 +180,15 @@ def get_multiple_parking_status_api(lot_id):
     statuses = get_multiple_parking_status(cursor, lot_id)
     conn.close()
     return jsonify([{'id': status[0], 'status': status[1], 'lot_id': lot_id} for status in statuses]), 200
+
+@parking_spot_bp.route('/api/spots/total',methods=['POST'])
+def get_total_spots_api():
+    data=request.get_json();
+    lot_id=data.get('lot-id')
+    conn=get_db();
+    cursor=conn.cursor();
+    res=get_total_spots(lot_id)
+    conn.close();
+    return jsonify([{'spot_count':res}]),200
+
+

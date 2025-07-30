@@ -253,10 +253,15 @@
       </div>
       <div class="modal-body">
         <input type="hidden" id="edit-id">
+        <label>Lot Name</label>
         <input type="text" id="edit-name" class="form-control mb-2" placeholder="Lot Name" required>
+        <label>Price per Hour</label>
         <input type="number" id="edit-price" class="form-control mb-2" placeholder="Price (₹ per hour)" required>
+        <label>Address</label>
         <input type="text" id="edit-address" class="form-control mb-2" placeholder="Address">
+        <label>Pincode</label>
         <input type="text" id="edit-pincode" class="form-control mb-2" placeholder="Pincode">
+        <label>Max Spots</label>
         <input type="number" id="edit-max-spots" class="form-control mb-2" placeholder="Max Spots" required>
       </div>
       <div class="modal-footer">
@@ -470,6 +475,11 @@ async function renderSpots(lotId) {
         spot.onclick = () => showSpotModal(s);
         container.appendChild(spot);
     });
+    res=await fetch('/api/spots/total',{
+      method:'POST',
+      headers: {'Content-Type': 'application/json'},
+
+    })
     const addBtn = document.createElement('div');
     addBtn.className = 'spot-card text-success border-success';
     addBtn.style.borderStyle = 'dashed';

@@ -32,16 +32,14 @@ def api_add_reservation():
         with get_db() as conn:
             cursor = conn.cursor()
 
-            # 🔍 Check if the user has an active reservation already
             cursor.execute("""
                 SELECT * FROM reservations
-                WHERE user_id = ? AND is_active = 1
-            """, (user_id,))
+                WHERE user_id = ? AND is_active = 1 AND vehicle_no=?
+            """, (user_id,vehicle_no))
             existing = cursor.fetchone()
             if existing:
                 return jsonify({'error': 'You already have an active reservation.'}), 409
 
-            # ✅ Add reservation
             add_reservation(cursor, spot_id, user_id, vehicle_no)
 
             conn.commit()

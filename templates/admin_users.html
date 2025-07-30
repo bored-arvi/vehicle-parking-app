@@ -91,7 +91,6 @@
     <table class="table table-bordered table-hover bg-white shadow-sm">
       <thead class="table-dark">
         <tr>
-          <th>User ID</th>
           <th>Name</th>
           <th>Username</th>
           <th>Email</th>
@@ -115,7 +114,6 @@ async function fetchAllUsers() {
   users.forEach(user => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${user.id}</td>
       <td>${user.name || '-'}</td>
       <td>${user.username}</td>
       <td>${user.email}</td>
