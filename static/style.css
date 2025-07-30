@@ -69,8 +69,8 @@ body {
 
 /* Headings */
 h1, h2, h5 {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800  ;
   color: #2c1f1f;
   text-align: center;
 }
@@ -85,6 +85,7 @@ h1, h2, h5 {
   width: 100%;
   max-width: 600px;
   margin: 20px auto;
+  text-align: left;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .card:hover {
@@ -97,7 +98,7 @@ h1, h2, h5 {
   padding: 8px;
   border-radius: 8px;
   min-width: 80px;
-  text-align: center;
+  text-align: left;
   cursor: pointer;
   font-weight: 600;
   color: #2c1f1f;
