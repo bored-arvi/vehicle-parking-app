@@ -27,7 +27,7 @@
   <!-- Sidebar -->
   <div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title fw-bold">Admin Panel</h5>
+      <h5 class="offcanvas-title fw-bold">User Panel</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
@@ -268,5 +268,7 @@ window.onload = () => {
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% include 'partials/alert_modal.html' %}
+<script src="{{ url_for('static', filename='js/alert_override.js') }}"></script>
 </body>
 </html>

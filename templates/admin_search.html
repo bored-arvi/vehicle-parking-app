@@ -86,28 +86,6 @@
 <div class="container mt-4">
   <h2>Search Parking Lots and Spots</h2>
   <div id="search-results"></div>
-</div>
-<!-- Add Lot Modal -->
-<div class="modal fade" id="addLotModal" tabindex="-1" aria-labelledby="addLotModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="addLotForm" class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Add New Lot</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <input type="text" name="name" placeholder="Lot Name" class="form-control mb-2" required>
-        <input type="number" step="0.1" name="price" placeholder="Price (₹ per hour)" class="form-control mb-2" required>
-        <input type="text" name="address" placeholder="Address" class="form-control mb-2">
-        <input type="text" name="pincode" placeholder="Pincode" class="form-control mb-2">
-        <input type="number" name="max_spots" placeholder="Total Spots" class="form-control mb-2" required>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-success">Add Lot</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <!-- Edit Lot Modal -->
 <div class="modal fade" id="editLotModal" tabindex="-1" aria-labelledby="editLotModalLabel" aria-hidden="true">
@@ -347,33 +325,6 @@ document.getElementById('editLotForm').addEventListener('submit', async (e) => {
 });
 
 
-document.getElementById('addLotForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        name: form.name.value,
-        price: parseFloat(form.price.value),
-        address: form.address.value,
-        pincode: form.pincode.value,
-        max_spots: parseInt(form.max_spots.value)
-    };
-
-    const res = await fetch('/lot/spot/add', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-
-    if (res.ok) {
-        form.reset();
-        bootstrap.Modal.getInstance(document.getElementById('addLotModal')).hide();
-        renderResults();
-    } else {
-        const errorData = await res.json();
-        alert('Failed to add lot: ' + (errorData.error || 'Unknown error.'));
-    }
-});
-
 document.getElementById('addSpotForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const lotId = document.getElementById('add-spot-lot-id').value;
@@ -470,6 +421,7 @@ async function deleteSpot() {
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+{% include 'partials/alert_modal.html' %}
+<script src="{{ url_for('static', filename='js/alert_override.js') }}"></script>
 </body>
 </html>

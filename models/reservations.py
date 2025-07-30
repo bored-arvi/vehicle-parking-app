@@ -64,7 +64,7 @@ def release_reservation(cursor, reservation_id,leaving_timestamp,parking_cost):
           
         cursor.execute('''
             UPDATE reservations
-            SET leaving_timestamp = ?, parking_cost = ?,is_active=0
+            SET leaving_timestamp = ?, parking_cost = ?, is_active=0
             WHERE id = ?
         ''', (leaving_timestamp, parking_cost, reservation_id))
 

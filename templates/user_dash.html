@@ -30,7 +30,7 @@
   <!-- Sidebar -->
   <div class="offcanvas offcanvas-start" tabindex="-1" id="adminSidebar">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title fw-bold">Admin Panel</h5>
+      <h5 class="offcanvas-title fw-bold">User Panel</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
@@ -70,7 +70,8 @@
           <input type="hidden" id="reserve-spot-id">
           <div class="mb-3">
             <label for="vehicle-number" class="form-label">Vehicle Number</label>
-            <input type="text" class="form-control" id="vehicle-number" required>
+            <input type="text" class="form-control" id="vehicle-number" pattern="^[A-Z]{2}\d{2}[A-Z]{1,2}\d{4}$" required >
+            <div class="invalid-feedback">Enter a valid Indian vehicle number (e.g., TN01AB1234).</div>
           </div>
           <p>Are you sure you want to reserve this spot?</p>
         </form>
@@ -277,5 +278,7 @@ window.onload = () => {
   fetchLots();
 };
 </script>
+{% include 'partials/alert_modal.html' %}
+<script src="{{ url_for('static', filename='js/alert_override.js') }}"></script>
 </body>
 </html>
